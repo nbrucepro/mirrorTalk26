@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.mirrortalk26.ui.HomeFragment"
+        android:label="Home">
+        <action
+            android:id="@+id/action_home_to_recording"
+            app:destination="@id/recordingFragment"/>
+    </fragment>
+    <fragment
+        android:id="@+id/recordingFragment"
+        android:name="com.example.mirrortalk26.ui.RecordingFragment"
+        android:label="Recording">
+        <action
+            android:id="@+id/action_recording_to_result"
+            app:destination="@id/resultFragment"/>
+        <argument
+            android:name="sessionId"
+            app:argType="long"/>
+    </fragment>
+    <fragment
+        android:id="@+id/resultFragment"
+        android:name="com.example.mirrortalk26.ui.ResultFragment"
+        android:label="Result">
+        <argument
+            android:name="sessionId"
+            app:argType="long"/>
+    </fragment>
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.example.mirrortalk26.ui.HistoryFragment"
+        android:label="History"/>
+
+</navigation>
