@@ -8,6 +8,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.mirrortalk26.analysis.SpeechAnalyzer;
+import com.example.mirrortalk26.data.AppDatabase;
 import com.example.mirrortalk26.data.SpeechSession;
 import com.example.mirrortalk26.repository.SessionRepository;
 
@@ -60,7 +61,7 @@ public class RecordingViewModel extends AndroidViewModel {
     }
 
     // Called when recording stops — saves session to Room
-    public long saveSession(int durationSeconds,String version){
+    public long saveSession(int durationSeconds, String version) {
         SpeechSession session = new SpeechSession(
                 System.currentTimeMillis(),
                 durationSeconds,
@@ -70,8 +71,9 @@ public class RecordingViewModel extends AndroidViewModel {
                 analyzer.getTranscript(),
                 version
         );
-        repository.insert(session);
-        return session.id;
+        // Insert and return the auto-generated ID
+        return AppDatabase.getInstance(getApplication())
+                .sessionDao()
+                .insert(session);
     }
-
 }

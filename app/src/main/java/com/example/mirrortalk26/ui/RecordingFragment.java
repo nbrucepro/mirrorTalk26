@@ -27,6 +27,7 @@ import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
 import com.example.mirrortalk26.R;
 import com.example.mirrortalk26.analysis.EyeContactAnalyzer;
@@ -213,16 +214,27 @@ public class RecordingFragment extends Fragment {
         };
         timerHandler.postDelayed(timeRunnable, 1000);
     }
-    private void stopRecording(){
+    private void stopRecording() {
         timerHandler.removeCallbacks(timeRunnable);
-        if(speechRecognizer != null){
+        if (speechRecognizer != null) {
             speechRecognizer.stopListening();
             speechRecognizer.destroy();
         }
-        viewModel.saveSession(secondsElapsed,version);
-        Toast.makeText(requireContext(),"Session saved!",Toast.LENGTH_SHORT).show();
-        // We'll add navigation to ResultFragment in Phase 8
-        requireActivity().getOnBackPressedDispatcher().onBackPressed();
+
+        // ✅ Run DB insert on background thread — Room requires this
+        Executors.newSingleThreadExecutor().execute(() -> {
+            // Save session and get its ID
+            long sessionId = viewModel.saveSession(secondsElapsed, version);
+
+            // Navigate back on the MAIN thread after save completes
+            requireActivity().runOnUiThread(() -> {
+                Bundle bundle = new Bundle();
+                bundle.putLong("sessionId",sessionId);
+                Navigation.findNavController(requireView())
+                        .navigate(R.id.action_recording_to_result,bundle);
+            });
+        });
+
     }
     @Override
     public void onDestroyView(){

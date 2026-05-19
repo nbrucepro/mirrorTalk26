@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="#0D0D1A">
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="20dp">
+    <!-- Title -->
+    <TextView
+        android:id="@+id/tvResultTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Session Results"
+        android:textColor="#FFFFFF"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp"/>
+    <!-- Timestamp -->
+    <TextView
+        android:id="@+id/tvTimestamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#7F77DD"
+        android:textSize="13sp"
+        app:layout_constraintTop_toBottomOf="@id/tvResultTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="4dp"/>
+    <!-- Duration card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardDuration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="#1A1A2E"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:layout_constraintTop_toBottomOf="@id/tvTimestamp"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="20dp">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⏱  Duration"
+                android:textColor="#AAAACC"
+                android:textSize="15sp"/>
+
+            <TextView
+                android:id="@+id/tvDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0:00"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+    <!-- WPM card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardWpm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="#1A1A2E"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:layout_constraintTop_toBottomOf="@+id/cardDuration"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="12dp"
+        >
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🎙  Words Per Minute"
+                android:textColor="#AAAACC"
+                android:textSize="15sp"/>
+
+            <TextView
+                android:id="@+id/tvWpmResult"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-- WPM"
+                android:textColor="#7F77DD"
+                android:textSize="22sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+        <TextView
+            android:id="@+id/tvWpmFeedback"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="#1D9E75"
+            android:textSize="13sp"/>
+    </LinearLayout>
+    </androidx.cardview.widget.CardView>
+    <!-- Filler words card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardFillers"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="#1A1A2E"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:layout_constraintTop_toBottomOf="@id/cardWpm"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="12dp">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="💬  Filler Words"
+                android:textColor="#AAAACC"
+                android:textSize="15sp"/>
+
+            <TextView
+                android:id="@+id/tvFillersResult"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textColor="#FFCC44"
+                android:textSize="22sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+    <!-- Eye contact card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardEye"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="#1A1A2E"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:layout_constraintTop_toBottomOf="@id/cardFillers"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="12dp">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="👁  Eye Contact"
+                android:textColor="#AAAACC"
+                android:textSize="15sp"/>
+
+            <TextView
+                android:id="@+id/tvEyeResult"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--%"
+                android:textColor="#1D9E75"
+                android:textSize="22sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+    <!-- Transcript card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardTranscript"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="#1A1A2E"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:layout_constraintTop_toBottomOf="@id/cardEye"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="12dp">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📝  Transcript"
+                android:textColor="#AAAACC"
+                android:textSize="15sp"/>
+
+            <TextView
+                android:id="@+id/tvTranscript"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="#CCCCEE"
+                android:textSize="14sp"
+                android:lineSpacingMultiplier="1.5"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+    <!-- Buttons row -->
+    <Button
+        android:id="@+id/btnHome"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:text="Home"
+        android:backgroundTint="#3C3489"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="6dp"
+        app:layout_constraintTop_toBottomOf="@id/cardTranscript"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnHistory"/>
+
+    <Button
+        android:id="@+id/btnHistory"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:text="History"
+        android:backgroundTint="#7F77DD"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="6dp"
+        app:layout_constraintTop_toBottomOf="@id/cardTranscript"
+        app:layout_constraintStart_toEndOf="@id/btnHome"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
