@@ -14,10 +14,11 @@ public class SpeechSession {
     public float eyeContactPercent; // % of time looking at camera
     public String transcript;     // full speech text
     public String version;        // "A" (live overlay) or "B" (no overlay)
+    public String videoPath;
     public SpeechSession(long timestamp, int durationSeconds,
                          int fillerWordCount, float averageWpm,
                          float eyeContactPercent, String transcript,
-                         String version){
+                         String version,String videoPath){
         this.timestamp=timestamp;
         this.durationSeconds = durationSeconds;
         this.fillerWordCount = fillerWordCount;
@@ -25,5 +26,6 @@ public class SpeechSession {
         this.eyeContactPercent = eyeContactPercent;
         this.transcript = transcript;
         this.version = version;
+        this.videoPath          = videoPath;
     }
 }

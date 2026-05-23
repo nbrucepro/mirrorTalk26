@@ -85,8 +85,92 @@ public class ResultFragment extends Fragment {
                 tvTranscript.setText(session.transcript.isEmpty()
                         ? "No transcript recorded"
                         : session.transcript);
+
+                // ── Confidence Score
+                TextView tvScore   = view.findViewById(R.id.tvConfidenceScore);
+                TextView tvScoreMsg = view.findViewById(R.id.tvScoreMessage);
+                // WPM score: optimal is 120–160, penalise outside that range
+                float wpmScore;
+                if (wpm >= 120 && wpm <= 160)      wpmScore = 100f;
+                else if (wpm >= 100 && wpm < 120)  wpmScore = 75f;
+                else if (wpm > 160 && wpm <= 180)  wpmScore = 75f;
+                else if (wpm > 0)                  wpmScore = 40f;
+                else                               wpmScore = 0f;
+
+// Filler score: 0 fillers = 100, penalise each one
+                float fillerScore = Math.max(0f, 100f - (fillers * 10f));
+
+// Eye score: directly the percentage
+                float eyeScore = session.eyeContactPercent;
+                // Composite score
+                int score = (int)((eyeScore * 0.40f) + (wpmScore * 0.35f) + (fillerScore * 0.25f));
+
+                tvScore.setText(String.valueOf(score));
+
+// Colour + message based on score
+                if (score >= 80) {
+                    tvScore.setTextColor(0xFF1D9E75);
+                    tvScoreMsg.setText("🏆 Excellent — competition ready!");
+                    tvScoreMsg.setTextColor(0xFF1D9E75);
+                } else if (score >= 60) {
+                    tvScore.setTextColor(0xFF7F77DD);
+                    tvScoreMsg.setText("💪 Good — keep practising");
+                    tvScoreMsg.setTextColor(0xFF7F77DD);
+                } else if (score >= 40) {
+                    tvScore.setTextColor(0xFFFFCC44);
+                    tvScoreMsg.setText("📈 Getting there — focus on eye contact");
+                    tvScoreMsg.setTextColor(0xFFFFCC44);
+                } else {
+                    tvScore.setTextColor(0xFFFF6B6B);
+                    tvScoreMsg.setText("🎯 Keep going — practice makes perfect");
+                    tvScoreMsg.setTextColor(0xFFFF6B6B);
+                }
+                // ── Video Playback ──────────────────────────────────────
+                androidx.cardview.widget.CardView cardVideo = view.findViewById(R.id.cardVideo);
+                android.widget.VideoView videoView = view.findViewById(R.id.videoView);
+                com.google.android.material.button.MaterialButton btnPlay =
+                        view.findViewById(R.id.btnPlayPause);
+                com.google.android.material.button.MaterialButton btnReplay =
+                        view.findViewById(R.id.btnReplay);
+
+                if (session.videoPath != null && !session.videoPath.isEmpty()) {
+                    java.io.File videoFile = new java.io.File(session.videoPath);
+                    if (videoFile.exists()) {
+                        cardVideo.setVisibility(View.VISIBLE);
+                        videoView.setVideoPath(session.videoPath);
+                        android.widget.MediaController mediaController =
+                                new android.widget.MediaController(requireContext());
+                        mediaController.setAnchorView(videoView);
+                        videoView.setMediaController(mediaController);
+
+                        videoView.setOnPreparedListener(mp -> {
+                            mp.setLooping(false);
+                            btnPlay.setText("▶  Play");
+                        });
+
+                        videoView.setOnCompletionListener(mp ->
+                                btnPlay.setText("▶  Play"));
+
+                        btnPlay.setOnClickListener(v -> {
+                            if (videoView.isPlaying()) {
+                                videoView.pause();
+                                btnPlay.setText("▶  Play");
+                            } else {
+                                videoView.start();
+                                btnPlay.setText("⏸  Pause");
+                            }
+                        });
+
+                        btnReplay.setOnClickListener(v -> {
+                            videoView.seekTo(0);
+                            videoView.start();
+                            btnPlay.setText("⏸  Pause");
+                        });
+                    }
+                }
             });
         });
+
 
         // Home button
         view.findViewById(R.id.btnHome).setOnClickListener(v ->

@@ -36,6 +36,9 @@ public class RecordingViewModel extends AndroidViewModel {
         super(application);
         repository = new SessionRepository(application);
     }
+    public void resetPartial() {
+        analyzer.resetPartial();
+    }
     // Called when recording starts
     public void startSession(){
         analyzer.start();
@@ -61,7 +64,7 @@ public class RecordingViewModel extends AndroidViewModel {
     }
 
     // Called when recording stops — saves session to Room
-    public long saveSession(int durationSeconds, String version) {
+    public long saveSession(int durationSeconds, String version,String videoPath) {
         SpeechSession session = new SpeechSession(
                 System.currentTimeMillis(),
                 durationSeconds,
@@ -69,7 +72,8 @@ public class RecordingViewModel extends AndroidViewModel {
                 analyzer.getCurrentWpm(),
                 totalFrames > 0 ? (contactFrames * 100f / totalFrames) : 0f,
                 analyzer.getTranscript(),
-                version
+                version,
+                videoPath != null ? videoPath : ""
         );
         // Insert and return the auto-generated ID
         return AppDatabase.getInstance(getApplication())

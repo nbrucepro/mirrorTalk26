@@ -68,4 +68,6 @@ dependencies {
     // ── Testing ──────────────────────────────────────────────
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    // ── CameraX Video ───────────────────────────────────────
+    implementation("androidx.camera:camera-video:1.3.1")
 }

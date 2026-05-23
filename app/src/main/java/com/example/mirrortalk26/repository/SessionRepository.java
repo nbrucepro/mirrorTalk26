@@ -29,6 +29,9 @@ public class SessionRepository {
     public void delete(SpeechSession session){
         executor.execute(() -> dao.delete(session));
     }
+    public void deleteById(long sessionId) {
+        executor.execute(() -> dao.deleteById(sessionId));
+    }
     public LiveData<List<SpeechSession>> getAllSessions(){
         return allSessions;
     }

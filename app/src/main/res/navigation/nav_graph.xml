@@ -3,25 +3,40 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/nav_graph"
     app:startDestination="@id/homeFragment">
+
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.example.mirrortalk26.ui.HomeFragment"
         android:label="Home">
         <action
             android:id="@+id/action_home_to_recording"
-            app:destination="@id/recordingFragment"/>
+            app:destination="@id/recordingFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+        <action
+            android:id="@+id/action_home_to_settings"
+            app:destination="@id/settingsFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
     </fragment>
+
     <fragment
         android:id="@+id/recordingFragment"
         android:name="com.example.mirrortalk26.ui.RecordingFragment"
         android:label="Recording">
         <action
             android:id="@+id/action_recording_to_result"
-            app:destination="@id/resultFragment"/>
-        <argument
-            android:name="sessionId"
-            app:argType="long"/>
+            app:destination="@id/resultFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
     </fragment>
+
     <fragment
         android:id="@+id/resultFragment"
         android:name="com.example.mirrortalk26.ui.ResultFragment"
@@ -30,9 +45,23 @@
             android:name="sessionId"
             app:argType="long"/>
     </fragment>
+
     <fragment
         android:id="@+id/historyFragment"
         android:name="com.example.mirrortalk26.ui.HistoryFragment"
-        android:label="History"/>
+        android:label="History">
+        <action
+            android:id="@+id/action_history_to_result"
+            app:destination="@id/resultFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.mirrortalk26.ui.SettingsFragment"
+        android:label="Settings"/>
 
 </navigation>

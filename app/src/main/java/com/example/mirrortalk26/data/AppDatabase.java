@@ -5,10 +5,22 @@ import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
-@Database(entities = {SpeechSession.class}, version = 1, exportSchema = false)
+import androidx.room.migration.Migration;
+import androidx.sqlite.db.SupportSQLiteDatabase;
+
+@Database(entities = {SpeechSession.class}, version = 2, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract SpeechSessionDao sessionDao();
     private static volatile AppDatabase INSTANCE;
+    // Migration from version 1 → 2: add videoPath column
+    static final Migration MIGRATION_1_2 = new Migration(1,2){
+        @Override
+        public void migrate(SupportSQLiteDatabase database){
+            database.execSQL(
+                    "ALTER TABLE speech_sessions ADD COLUMN videoPath TEXT DEFAULT ''"
+            );
+        }
+    };
     public static AppDatabase getInstance(Context context){
         if (INSTANCE == null){
             synchronized (AppDatabase.class){
@@ -17,7 +29,9 @@ public abstract class AppDatabase extends RoomDatabase {
                             context.getApplicationContext(),
                             AppDatabase.class,
                             "mirrortalk_db"
-                    ).build();
+                    )
+                            .addMigrations(MIGRATION_1_2)
+                            .build();
                 }
             }
         }

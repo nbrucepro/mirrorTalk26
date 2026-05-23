@@ -10,14 +10,21 @@ import java.util.List;
 
 @Dao
 public interface SpeechSessionDao {
-@Insert
+    @Insert
     long insert(SpeechSession session);
-@Query("SELECT * FROM speech_sessions ORDER BY timestamp DESC")
+
+    @Query("SELECT * FROM speech_sessions ORDER BY timestamp DESC")
     LiveData<List<SpeechSession>> getAllSessions();
-@Query("SELECT * FROM speech_sessions WHERE id=:id")
+
+    @Query("SELECT * FROM speech_sessions WHERE id=:id")
     SpeechSession getSessionById(long id);
-@Delete
+
+    @Delete
     void delete(SpeechSession session);
-@Query("SELECT COUNT(*) FROM speech_sessions")
+
+    @Query("SELECT COUNT(*) FROM speech_sessions")
     int getSessionCount();
+
+    @Query("DELETE FROM speech_sessions where id = :id")
+    void deleteById(long id);
 }
