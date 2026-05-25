@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#0D0D1A">
+
+    <!-- Header bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingEnd="16dp">
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:src="@drawable/ic_arrow_back"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="10dp"
+            android:contentDescription="Back"/>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Session Comparison"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginStart="4dp"/>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:overScrollMode="never">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            app:cardBackgroundColor="#1A1A2E"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <!-- ── Column headers ── -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingBottom="12dp">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:text="Metric"
+                        android:textColor="#555577"
+                        android:textSize="12sp"/>
+                    <TextView
+                        android:id="@+id/tvHeaderA"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:gravity="center"
+                        android:textColor="#7F77DD"
+                        android:textSize="11sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:id="@+id/tvHeaderB"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:gravity="center"
+                        android:textColor="#1D9E75"
+                        android:textSize="11sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="Δ"
+                        android:textColor="#555577"
+                        android:textSize="12sp"/>
+                </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="1dp"
+                    android:background="#0D0D1A" android:layout_marginBottom="8dp"/>
+
+                <!-- Confidence score -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="2" android:text="Confidence"
+                        android:textColor="#AAAACC" android:textSize="14sp"/>
+                    <TextView android:id="@+id/tvScoreA" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="2"
+                        android:gravity="center" android:textColor="#FFFFFF" android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView android:id="@+id/tvScoreB" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="2"
+                        android:gravity="center" android:textColor="#FFFFFF" android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView android:id="@+id/tvScoreDelta" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="1"
+                        android:gravity="center" android:textSize="13sp" android:textStyle="bold"/>
+                </LinearLayout>
+
+                <!-- WPM -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="2" android:text="WPM"
+                        android:textColor="#AAAACC" android:textSize="14sp"/>
+                    <TextView android:id="@+id/tvWpmA" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="2"
+                        android:gravity="center" android:textColor="#FFFFFF" android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView android:id="@+id/tvWpmB" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="2"
+                        android:gravity="center" android:textColor="#FFFFFF" android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView android:id="@+id/tvWpmDelta" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="1"
+                        android:gravity="center" android:textSize="13sp" android:textStyle="bold"/>
+                </LinearLayout>
+
+                <!-- Filler words -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="2" android:text="Fillers"
+                        android:textColor="#AAAACC" android:textSize="14sp"/>
+                    <TextView android:id="@+id/tvFillersA" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="2"
+                        android:gravity="center" android:textColor="#FFFFFF" android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView android:id="@+id/tvFillersB" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="2"
+                        android:gravity="center" android:textColor="#FFFFFF" android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView android:id="@+id/tvFillersDelta" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="1"
+                        android:gravity="center" android:textSize="13sp" android:textStyle="bold"/>
+                </LinearLayout>
+
+                <!-- Eye contact -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="2" android:text="Eye Contact"
+                        android:textColor="#AAAACC" android:textSize="14sp"/>
+                    <TextView android:id="@+id/tvEyeA" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="2"
+                        android:gravity="center" android:textColor="#FFFFFF" android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView android:id="@+id/tvEyeB" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="2"
+                        android:gravity="center" android:textColor="#FFFFFF" android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView android:id="@+id/tvEyeDelta" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="1"
+                        android:gravity="center" android:textSize="13sp" android:textStyle="bold"/>
+                </LinearLayout>
+
+                <!-- Duration -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="2" android:text="Duration"
+                        android:textColor="#AAAACC" android:textSize="14sp"/>
+                    <TextView android:id="@+id/tvDurA" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="2"
+                        android:gravity="center" android:textColor="#FFFFFF" android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView android:id="@+id/tvDurB" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="2"
+                        android:gravity="center" android:textColor="#FFFFFF" android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView android:id="@+id/tvDurDelta" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="1"
+                        android:gravity="center" android:textSize="13sp" android:textStyle="bold"/>
+                </LinearLayout>
+
+                <!-- Hint -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Δ = change from older → newer session. Green = improvement."
+                    android:textColor="#555577"
+                    android:textSize="11sp"
+                    android:gravity="center"/>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </ScrollView>
+
+</LinearLayout>

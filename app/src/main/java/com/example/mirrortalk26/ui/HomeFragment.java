@@ -13,41 +13,103 @@ import androidx.navigation.Navigation;
 
 import com.example.mirrortalk26.R;
 import com.example.mirrortalk26.data.AppDatabase;
+import com.example.mirrortalk26.gamification.GamificationManager;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Executors;
 
 public class HomeFragment extends Fragment {
-    @Nullable
-    @Override
+
+    private static final List<String> PROMPTS = Collections.unmodifiableList(Arrays.asList(
+            "Describe a challenge you've overcome and what you learned from it.",
+            "If you could change one thing about your city, what would it be and why?",
+            "Explain how a smartphone works to someone who has never seen one.",
+            "What is the most important skill for success in the next decade?",
+            "Pitch your favourite app to someone in 60 seconds.",
+            "Describe your ideal workday from morning to night.",
+            "What does leadership mean to you? Give a real example.",
+            "If you had unlimited resources, what problem would you solve first?",
+            "Tell me about a book or film that changed how you think.",
+            "Walk me through how you prepare for an important meeting.",
+            "Explain the concept of machine learning to a 10-year-old.",
+            "Describe a time you had to adapt quickly to unexpected change.",
+            "What makes a great team, and what is your role in one?",
+            "If you could have dinner with anyone in history, who and why?",
+            "Explain compound interest without using any numbers.",
+            "Convince me to try a food I've never eaten before.",
+            "What is one misconception people have about your field of work?",
+            "Describe your morning routine and how it sets up your day.",
+            "What skill are you learning right now and why?",
+            "Give a one-minute elevator pitch for yourself.",
+            "Tell me about a decision you regret and what you'd do differently.",
+            "Explain why empathy is a professional skill, not just a personal one.",
+            "Describe the city you grew up in to someone who has never been there.",
+            "What does work-life balance mean to you in practice?",
+            "If you could redesign school from scratch, what would change?"
+    ));
+
+    private final Random random = new Random();
+    private int lastIndex = -1;
+
+    @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState){
-        return inflater.inflate(R.layout.fragment_home,container,false);
+                             @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_home, container, false);
     }
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState){
-        super.onViewCreated(view,savedInstanceState);
-        TextView tvCount = view.findViewById(R.id.tvSessionCount);
 
-        // Load session count from DB
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // ── Session count + gamification badges ───────────────────────────────
+        TextView tvCount  = view.findViewById(R.id.tvSessionCount);
+        TextView tvStreak = view.findViewById(R.id.tvStreak);
+        TextView tvLevel  = view.findViewById(R.id.tvLevel);
+
         Executors.newSingleThreadExecutor().execute(() -> {
             int count = AppDatabase.getInstance(requireContext())
                     .sessionDao().getSessionCount();
-            requireActivity().runOnUiThread(() ->
-                    tvCount.setText(count + (count == 1 ? " session" : " sessions") + " completed"));
+            GamificationManager gm = new GamificationManager(requireContext());
+            int streak = gm.getStreakDays();
+            int level  = gm.getLevel();
+            int xp     = gm.getXp();
+
+            requireActivity().runOnUiThread(() -> {
+                tvCount.setText(count + (count == 1 ? " session" : " sessions") + " completed");
+                tvStreak.setText(streak > 0 ? streak + " day streak 🔥" : "Start your streak today");
+                tvLevel.setText("Level " + level + "  ·  " + xp + " XP");
+            });
         });
-        // Start Session button → go to RecordingFragment
+
+        // ── Navigation ─────────────────────────────────────────────────────────
         view.findViewById(R.id.btnStart).setOnClickListener(v ->
-                Navigation.findNavController(view)
-                        .navigate(R.id.action_home_to_recording)
-        );
-        // History
+                Navigation.findNavController(view).navigate(R.id.action_home_to_recording));
         view.findViewById(R.id.btnHistory).setOnClickListener(v ->
-                Navigation.findNavController(view)
-                        .navigate(R.id.historyFragment));
-        // Settings
+                Navigation.findNavController(view).navigate(R.id.historyFragment));
         view.findViewById(R.id.btnSettings).setOnClickListener(v ->
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_home_to_settings));
+                Navigation.findNavController(v).navigate(R.id.action_home_to_settings));
+        view.findViewById(R.id.btnAchievements).setOnClickListener(v ->
+                Navigation.findNavController(v).navigate(R.id.achievementsFragment));
+
+        // ── Practice Prompts ───────────────────────────────────────────────────
+        TextView tvPrompt   = view.findViewById(R.id.tvPrompt);
+        View     btnShuffle = view.findViewById(R.id.btnShuffle);
+        showNextPrompt(tvPrompt);
+        btnShuffle.setOnClickListener(v ->
+                tvPrompt.animate().alpha(0f).setDuration(150).withEndAction(() -> {
+                    showNextPrompt(tvPrompt);
+                    tvPrompt.animate().alpha(1f).setDuration(200).start();
+                }).start());
+    }
+
+    private void showNextPrompt(TextView tv) {
+        int next;
+        do { next = random.nextInt(PROMPTS.size()); } while (next == lastIndex);
+        lastIndex = next;
+        tv.setText(PROMPTS.get(next));
     }
 }

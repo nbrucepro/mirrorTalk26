@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:background="#0D0D1A">
 
-    <!-- ── Header ── -->
+    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
@@ -35,7 +35,6 @@
             android:textStyle="bold"
             android:layout_marginStart="4dp"/>
 
-        <!-- Session count badge -->
         <TextView
             android:id="@+id/tvEmpty"
             android:layout_width="wrap_content"
@@ -46,40 +45,50 @@
             android:visibility="gone"/>
     </LinearLayout>
 
-    <!-- ── Chart card ── -->
+    <!-- Chart card -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="12dp"
+        android:layout_marginBottom="8dp"
         app:cardBackgroundColor="#1A1A2E"
         app:cardCornerRadius="16dp"
         app:cardElevation="0dp">
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="12dp">
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="WPM PROGRESS"
+                android:text="WPM &amp; CONFIDENCE PROGRESS"
                 android:textColor="#7F77DD"
                 android:textSize="11sp"
                 android:letterSpacing="0.1"
                 android:layout_marginBottom="8dp"/>
-
             <com.github.mikephil.charting.charts.LineChart
                 android:id="@+id/lineChart"
                 android:layout_width="match_parent"
-                android:layout_height="150dp"/>
+                android:layout_height="180dp"/>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- ── Section label ── -->
+    <!-- Compare hint: visible only when ≥ 2 sessions exist -->
+    <TextView
+        android:id="@+id/tvCompareHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="💡 Long-press two sessions to compare them side by side"
+        android:textColor="#7F77DD"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:paddingTop="4dp"
+        android:paddingBottom="8dp"
+        android:visibility="gone"/>
+
+    <!-- Sessions label -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -90,7 +99,7 @@
         android:layout_marginStart="20dp"
         android:layout_marginBottom="8dp"/>
 
-    <!-- ── Sessions list ── -->
+    <!-- Sessions list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerSessions"
         android:layout_width="match_parent"

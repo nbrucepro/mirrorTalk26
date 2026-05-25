@@ -6,8 +6,8 @@
     android:layout_height="match_parent"
     android:background="#0D0D1A"
     android:fillViewport="true"
-    android:paddingBottom="80dp"
     android:paddingTop="80dp"
+    android:paddingBottom="80dp"
     android:clipToPadding="false">
 
     <LinearLayout
@@ -16,344 +16,257 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <!-- Header row -->
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+        <!-- Responsive header -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
             android:layout_marginBottom="16dp">
+            <TextView android:id="@+id/tvTitle"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Session Results"
+                android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold"
+                android:maxLines="1" android:ellipsize="end"/>
+            <TextView android:id="@+id/tvTimestamp"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textColor="#7F77DD" android:textSize="12sp" android:layout_marginStart="8dp"/>
+        </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Session Results"
-                android:textColor="#FFFFFF"
-                android:textSize="26sp"
-                android:textStyle="bold"
-                android:layout_centerVertical="true"/>
-
-            <TextView
-                android:id="@+id/tvTimestamp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="#7F77DD"
-                android:textSize="12sp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"/>
-        </RelativeLayout>
-        <!-- ── VIDEO PLAYBACK (only shown if video exists) ── -->
+        <!-- ── NEW BADGE TOAST (hidden until a badge is earned) ── -->
         <androidx.cardview.widget.CardView
-            android:id="@+id/cardVideo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:visibility="gone"
-            app:cardBackgroundColor="#0A0A18"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="0dp">
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="SESSION RECORDING"
-                android:textColor="#7F77DD"
-                android:textSize="11sp"
-                android:letterSpacing="0.1"
-                android:layout_margin="12dp"/>
-            <VideoView
-                android:id="@+id/videoView"
-                android:layout_width="match_parent"
-                android:layout_height="220dp"/>
-            <!-- Controls row -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center"
-                android:padding="10dp">
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnPlayPause"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:text="▶  Play"
-                    android:textSize="13sp"
-                    android:textColor="#FFFFFF"
-                    app:backgroundTint="#7F77DD"
-                    app:cornerRadius="20dp"
-                    android:layout_marginEnd="10dp"/>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnReplay"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:text="↺  Replay"
-                    android:textSize="13sp"
-                    android:textColor="#7F77DD"
-                    app:backgroundTint="@android:color/transparent"
-                    app:strokeColor="#3C3489"
-                    app:strokeWidth="1dp"
-                    app:cornerRadius="20dp"/>
-            </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-        <!-- ── CONFIDENCE SCORE HERO ── -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardScore"
+            android:id="@+id/newBadgeCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
-            app:cardBackgroundColor="#1A1435"
-            app:cardCornerRadius="16dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="#2A1A00"
+            app:cardCornerRadius="12dp"
             app:cardElevation="0dp">
-
-            <LinearLayout
+            <TextView
+                android:id="@+id/tvNewBadge"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="24dp">
+                android:padding="14dp"
+                android:textColor="#FFCC44"
+                android:textSize="14sp"
+                android:textStyle="bold"/>
+        </androidx.cardview.widget.CardView>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="CONFIDENCE SCORE"
-                    android:textColor="#7F77DD"
-                    android:textSize="11sp"
-                    android:letterSpacing="0.12"/>
+        <!-- ── VIDEO PLAYBACK ── -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardVideo"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp" android:visibility="gone"
+            app:cardBackgroundColor="#000000" app:cardCornerRadius="14dp" app:cardElevation="0dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="SESSION RECORDING" android:textColor="#7F77DD"
+                    android:textSize="11sp" android:letterSpacing="0.1"
+                    android:paddingStart="14dp" android:paddingTop="12dp" android:paddingBottom="8dp"/>
+                <VideoView android:id="@+id/videoView"
+                    android:layout_width="match_parent" android:layout_height="240dp"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center"
+                    android:paddingTop="10dp" android:paddingBottom="12dp">
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPlayPause" android:layout_width="wrap_content"
+                        android:layout_height="40dp" android:text="Play" android:textColor="#FFFFFF"
+                        android:textSize="13sp" app:icon="@drawable/ic_play" app:iconGravity="textStart"
+                        app:iconSize="18dp" app:iconTint="#FFFFFF" app:backgroundTint="#7F77DD"
+                        app:cornerRadius="20dp" android:layout_marginEnd="10dp"/>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnReplay" android:layout_width="wrap_content"
+                        android:layout_height="40dp" android:text="Replay" android:textColor="#7F77DD"
+                        android:textSize="13sp" app:icon="@drawable/ic_replay" app:iconGravity="textStart"
+                        app:iconSize="18dp" app:iconTint="#7F77DD"
+                        app:backgroundTint="@android:color/transparent"
+                        app:strokeColor="#3C3489" app:strokeWidth="1dp" app:cornerRadius="20dp"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
-                <TextView
-                    android:id="@+id/tvConfidenceScore"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="--"
-                    android:textColor="#FFFFFF"
-                    android:textSize="80sp"
-                    android:textStyle="bold"
-                    android:includeFontPadding="false"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="out of 100"
-                    android:textColor="#555577"
-                    android:textSize="13sp"/>
-
-                <TextView
-                    android:id="@+id/tvScoreMessage"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:gravity="center"/>
+        <!-- ── CONFIDENCE SCORE + XP ── -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardScore"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardBackgroundColor="#1A1435" app:cardCornerRadius="16dp" app:cardElevation="0dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:gravity="center" android:padding="24dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="CONFIDENCE SCORE" android:textColor="#7F77DD"
+                    android:textSize="11sp" android:letterSpacing="0.12"/>
+                <TextView android:id="@+id/tvConfidenceScore"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="--" android:textColor="#FFFFFF" android:textSize="80sp"
+                    android:textStyle="bold" android:includeFontPadding="false"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="out of 100" android:textColor="#555577" android:textSize="13sp"/>
+                <TextView android:id="@+id/tvScoreMessage"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp" android:textSize="14sp"
+                    android:textStyle="bold" android:gravity="center"/>
+                <!-- XP earned this session -->
+                <TextView android:id="@+id/tvXpEarned"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp" android:textColor="#7F77DD"
+                    android:textSize="12sp" android:fontFamily="sans-serif-medium"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <!-- ── DURATION ── -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardDuration"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            app:cardBackgroundColor="#1A1A2E"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="0dp">
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="16dp">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Duration"
-                    android:textColor="#AAAACC"
-                    android:textSize="15sp"/>
-                <TextView
-                    android:id="@+id/tvDuration"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0:00"
-                    android:textColor="#FFFFFF"
-                    android:textSize="20sp"
+        <androidx.cardview.widget.CardView android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginBottom="10dp"
+            app:cardBackgroundColor="#1A1A2E" app:cardCornerRadius="12dp" app:cardElevation="0dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="Duration"
+                    android:textColor="#AAAACC" android:textSize="15sp"/>
+                <TextView android:id="@+id/tvDuration"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="0:00" android:textColor="#FFFFFF" android:textSize="20sp"
                     android:textStyle="bold"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <!-- ── WPM ── -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardWpm"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            app:cardBackgroundColor="#1A1A2E"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="0dp">
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Words Per Minute"
-                        android:textColor="#AAAACC"
-                        android:textSize="15sp"/>
-                    <TextView
-                        android:id="@+id/tvWpmResult"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="-- WPM"
-                        android:textColor="#7F77DD"
-                        android:textSize="22sp"
+        <androidx.cardview.widget.CardView android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginBottom="10dp"
+            app:cardBackgroundColor="#1A1A2E" app:cardCornerRadius="12dp" app:cardElevation="0dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="16dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="Words Per Minute"
+                        android:textColor="#AAAACC" android:textSize="15sp"/>
+                    <TextView android:id="@+id/tvWpmResult"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="-- WPM" android:textColor="#7F77DD" android:textSize="22sp"
                         android:textStyle="bold"/>
                 </LinearLayout>
-                <TextView
-                    android:id="@+id/tvWpmFeedback"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:textSize="13sp"/>
+                <TextView android:id="@+id/tvWpmFeedback"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp" android:textSize="13sp"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <!-- ── FILLERS ── -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardFillers"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            app:cardBackgroundColor="#1A1A2E"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="0dp">
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="16dp">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Filler Words"
-                    android:textColor="#AAAACC"
-                    android:textSize="15sp"/>
-                <TextView
-                    android:id="@+id/tvFillersResult"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="--"
-                    android:textColor="#FFCC44"
-                    android:textSize="22sp"
-                    android:textStyle="bold"/>
+        <androidx.cardview.widget.CardView android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginBottom="10dp"
+            app:cardBackgroundColor="#1A1A2E" app:cardCornerRadius="12dp" app:cardElevation="0dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="16dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="Filler Words"
+                        android:textColor="#AAAACC" android:textSize="15sp"/>
+                    <TextView android:id="@+id/tvFillersResult"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="--" android:textColor="#FFCC44" android:textSize="22sp"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+                <TextView android:id="@+id/tvFillerBreakdown"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp" android:textColor="#888899"
+                    android:textSize="12sp" android:lineSpacingMultiplier="1.5"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <!-- ── EYE CONTACT ── -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardEye"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            app:cardBackgroundColor="#1A1A2E"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="0dp">
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="16dp">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Eye Contact"
-                    android:textColor="#AAAACC"
-                    android:textSize="15sp"/>
-                <TextView
-                    android:id="@+id/tvEyeResult"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="--%"
-                    android:textColor="#1D9E75"
-                    android:textSize="22sp"
+        <androidx.cardview.widget.CardView android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginBottom="10dp"
+            app:cardBackgroundColor="#1A1A2E" app:cardCornerRadius="12dp" app:cardElevation="0dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="Eye Contact"
+                    android:textColor="#AAAACC" android:textSize="15sp"/>
+                <TextView android:id="@+id/tvEyeResult"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="--%"  android:textColor="#1D9E75" android:textSize="22sp"
                     android:textStyle="bold"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- ── TRANSCRIPT ── -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardTranscript"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            app:cardBackgroundColor="#1A1A2E"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="0dp">
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Transcript"
-                    android:textColor="#AAAACC"
-                    android:textSize="13sp"
-                    android:letterSpacing="0.05"/>
-                <TextView
-                    android:id="@+id/tvTranscript"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textColor="#CCCCEE"
-                    android:textSize="14sp"
-                    android:lineSpacingMultiplier="1.6"/>
+        <!-- ── AI COACH FEEDBACK CARD ── -->
+        <androidx.cardview.widget.CardView android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginBottom="10dp"
+            app:cardBackgroundColor="#0F1A2E" app:cardCornerRadius="12dp" app:cardElevation="0dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="16dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical"
+                    android:layout_marginBottom="10dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:id="@+id/tvCoachTitle"
+                        android:text="AI Coach Feedback"
+                        android:textColor="#7F77DD" android:textSize="15sp" android:textStyle="bold"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Powered by Claude"
+                        android:textColor="#3C3489" android:textSize="10sp"/>
+                </LinearLayout>
+                <TextView android:id="@+id/tvCoachTips"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:textColor="#CCCCEE" android:textSize="14sp"
+                    android:lineSpacingMultiplier="1.7"
+                    android:text="Loading tips…"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- ── BUTTONS ── -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+        <!-- ── TRANSCRIPT ── -->
+        <androidx.cardview.widget.CardView android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginBottom="20dp"
+            app:cardBackgroundColor="#1A1A2E" app:cardCornerRadius="12dp" app:cardElevation="0dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Transcript" android:textColor="#AAAACC"
+                    android:textSize="13sp" android:letterSpacing="0.05"/>
+                <TextView android:id="@+id/tvTranscript"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp" android:textColor="#CCCCEE"
+                    android:textSize="14sp" android:lineSpacingMultiplier="1.6"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
+        <!-- ── ACTION BUTTONS: Home | History | Share | Challenge ── -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginBottom="10dp">
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnHome"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_weight="1"
-                android:text="Home"
-                android:textColor="#FFFFFF"
-                android:layout_marginEnd="6dp"
-                app:backgroundTint="#3C3489"
-                app:cornerRadius="12dp"/>
-
+                android:id="@+id/btnHome" android:layout_width="0dp"
+                android:layout_height="52dp" android:layout_weight="1"
+                android:text="Home" android:textColor="#FFFFFF" android:layout_marginEnd="6dp"
+                app:icon="@drawable/ic_home" app:iconGravity="textStart"
+                app:iconSize="18dp" app:iconTint="#FFFFFF"
+                app:backgroundTint="#3C3489" app:cornerRadius="12dp"/>
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnHistory"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_weight="1"
-                android:text="History"
-                android:textColor="#FFFFFF"
+                android:id="@+id/btnHistory" android:layout_width="0dp"
+                android:layout_height="52dp" android:layout_weight="1"
+                android:text="History" android:textColor="#FFFFFF"
                 android:layout_marginStart="6dp"
-                app:backgroundTint="#7F77DD"
-                app:cornerRadius="12dp"/>
+                app:icon="@drawable/ic_history" app:iconGravity="textStart"
+                app:iconSize="18dp" app:iconTint="#FFFFFF"
+                app:backgroundTint="#7F77DD" app:cornerRadius="12dp"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnShare" android:layout_width="0dp"
+                android:layout_height="52dp" android:layout_weight="1"
+                android:text="Share" android:textColor="#FFFFFF" android:layout_marginEnd="6dp"
+                app:icon="@drawable/ic_share" app:iconGravity="textStart"
+                app:iconSize="18dp" app:iconTint="#FFFFFF"
+                app:backgroundTint="#1D9E75" app:cornerRadius="12dp"/>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnChallenge" android:layout_width="0dp"
+                android:layout_height="52dp" android:layout_weight="1"
+                android:text="Challenge" android:textColor="#FFFFFF"
+                android:layout_marginStart="6dp"
+                app:icon="@drawable/ic_challenge" app:iconGravity="textStart"
+                app:iconSize="18dp" app:iconTint="#FFFFFF"
+                app:backgroundTint="#C95500" app:cornerRadius="12dp"/>
         </LinearLayout>
 
     </LinearLayout>

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000">
-    <!-- Camera preview fills the screen -->
+
     <androidx.camera.view.PreviewView
         android:id="@+id/previewView"
         android:layout_width="match_parent"
@@ -13,7 +13,7 @@
         android:clickable="false"
         android:focusable="false"/>
 
-    <!-- Version A live overlay (top right corner) -->
+    <!-- Live feedback overlay (Version A only) -->
     <androidx.cardview.widget.CardView
         android:id="@+id/overlayCard"
         android:layout_width="wrap_content"
@@ -23,53 +23,46 @@
         app:cardCornerRadius="8dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:visibility="gone"
-        >
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="12dp"
-        >
-        <TextView android:id="@+id/tvWpm"
+        android:visibility="gone">
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="WPM: --"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"/>
-
-        <TextView android:id="@+id/tvFillers"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Fillers: 0"
-            android:textColor="#FFCC44"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp"/>
-
-        <TextView android:id="@+id/tvEye"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Eye: --%"
-            android:textColor="#44FF88"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp"/>
-    </LinearLayout>
+            android:padding="12dp">
+            <TextView android:id="@+id/tvWpm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="WPM: --"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"/>
+            <TextView android:id="@+id/tvFillers"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fillers: 0"
+                android:textColor="#FFCC44"
+                android:textSize="14sp"
+                android:layout_marginTop="4dp"/>
+            <TextView android:id="@+id/tvEye"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Eye: --%"
+                android:textColor="#44FF88"
+                android:textSize="14sp"
+                android:layout_marginTop="4dp"/>
+            <TextView android:id="@+id/tvPartialTranscript"
+                android:layout_width="160dp"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#AAAACC"
+                android:textSize="11sp"
+                android:maxLines="2"
+                android:ellipsize="start"
+                android:layout_marginTop="6dp"
+                android:fontFamily="monospace"/>
+        </LinearLayout>
     </androidx.cardview.widget.CardView>
-    <!-- Stop button at the bottom -->
-    <Button
-        android:id="@+id/btnStop"
-        android:layout_width="160dp"
-        android:layout_height="56dp"
-        android:text="Hold to stop"
-        android:backgroundTint="#CC333333"
-        android:textColor="#FFFFFF"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="40dp"
-        />
-    <!-- Recording timer -->
-    <!-- REC indicator + timer row -->
+
+    <!-- REC dot + timer (top-centre) -->
     <LinearLayout
         android:id="@+id/timerRow"
         android:layout_width="wrap_content"
@@ -77,7 +70,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="#99000000"
-        android:paddingStart="12dp"
+        android:paddingStart="14dp"
         android:paddingEnd="14dp"
         android:paddingTop="6dp"
         android:paddingBottom="6dp"
@@ -85,15 +78,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="24dp">
-
-        <!-- Blinking red dot -->
         <View
             android:id="@+id/recDot"
             android:layout_width="10dp"
             android:layout_height="10dp"
             android:background="@drawable/rec_dot"
             android:layout_marginEnd="8dp"/>
-
         <TextView
             android:id="@+id/tvTimer"
             android:layout_width="wrap_content"
@@ -102,6 +92,50 @@
             android:textColor="#FFFFFF"
             android:textSize="20sp"
             android:textStyle="bold"/>
+    </LinearLayout>
+
+    <!-- Pause / Stop controls (bottom-centre) -->
+    <LinearLayout
+        android:id="@+id/bottomControls"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="48dp">
+
+        <!-- Pause / Resume -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPauseResume"
+            android:layout_width="wrap_content"
+            android:layout_height="52dp"
+            android:text="Pause"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:layout_marginEnd="12dp"
+            app:icon="@drawable/ic_pause"
+            app:iconGravity="textStart"
+            app:iconSize="18dp"
+            app:iconTint="#FFFFFF"
+            app:backgroundTint="#555555"
+            app:cornerRadius="26dp"/>
+
+        <!-- Stop -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnStop"
+            android:layout_width="wrap_content"
+            android:layout_height="52dp"
+            android:text="Hold to stop"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            app:icon="@drawable/ic_stop"
+            app:iconGravity="textStart"
+            app:iconSize="18dp"
+            app:iconTint="#FFFFFF"
+            app:backgroundTint="#992222"
+            app:cornerRadius="26dp"/>
 
     </LinearLayout>
 

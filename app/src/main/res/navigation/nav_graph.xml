@@ -57,11 +57,38 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right"/>
+        <!-- NEW: navigate to comparison screen -->
+        <action
+            android:id="@+id/action_history_to_compare"
+            app:destination="@id/compareFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
     </fragment>
 
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.example.mirrortalk26.ui.SettingsFragment"
         android:label="Settings"/>
+
+    <!-- NEW: Achievements screen -->
+    <fragment
+        android:id="@+id/achievementsFragment"
+        android:name="com.example.mirrortalk26.ui.AchievementsFragment"
+        android:label="Achievements"/>
+
+    <!-- NEW: Side-by-side session comparison -->
+    <fragment
+        android:id="@+id/compareFragment"
+        android:name="com.example.mirrortalk26.ui.CompareFragment"
+        android:label="Compare">
+        <argument
+            android:name="sessionIdA"
+            app:argType="long"/>
+        <argument
+            android:name="sessionIdB"
+            app:argType="long"/>
+    </fragment>
 
 </navigation>
