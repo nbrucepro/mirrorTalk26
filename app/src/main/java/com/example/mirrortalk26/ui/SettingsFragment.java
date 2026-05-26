@@ -21,49 +21,69 @@ public class SettingsFragment extends Fragment {
     public static final String PREF_SAVE_VIDEO = "save_video";
 
     private SharedPreferences prefs;
-    @Nullable
-    @Override
+    private View optionA;
+    private View optionB;
+    private RadioButton radioA;
+    private RadioButton radioB;
+
+    @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_settings, container, false);
     }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
-        RadioButton radioA = view.findViewById(R.id.radioA);
-        RadioButton radioB   = view.findViewById(R.id.radioB);
+        optionA = view.findViewById(R.id.optionA);
+        optionB = view.findViewById(R.id.optionB);
+        radioA  = view.findViewById(R.id.radioA);
+        radioB  = view.findViewById(R.id.radioB);
         SwitchMaterial switchVideo = view.findViewById(R.id.switchVideo);
-        // Load saved preferences
-        String currentVersion = prefs.getString(PREF_VERSION, "A");
-        boolean saveVideo     = prefs.getBoolean(PREF_SAVE_VIDEO, false);
 
-        radioA.setChecked(currentVersion.equals("A"));
-        radioB.setChecked(currentVersion.equals("B"));
+        // Load saved preferences
+        String  currentVersion = prefs.getString(PREF_VERSION, "A");
+        boolean saveVideo      = prefs.getBoolean(PREF_SAVE_VIDEO, false);
+
         switchVideo.setChecked(saveVideo);
-        // Toggle between A and B
-        view.findViewById(R.id.optionA).setOnClickListener(v -> {
-            radioA.setChecked(true);
-            radioB.setChecked(false);
-        });
-        view.findViewById(R.id.optionB).setOnClickListener(v -> {
-            radioA.setChecked(false);
-            radioB.setChecked(true);
-        });
-        view.findViewById(R.id.btnSaveSettings).setOnClickListener(v->{
-        String version = radioA.isChecked() ? "A" : "B";
-        prefs.edit()
-                .putString(PREF_VERSION,version)
-                .putBoolean(PREF_SAVE_VIDEO,switchVideo.isChecked())
-                .apply();
+        // Restore visual selection to match saved state
+        selectVersion(currentVersion.equals("A"));
+
+        // FIX 4: Toggle backgrounds AND radio states together.
+        // Old code only updated radioA/radioB.isChecked() but never swapped the
+        // optionA/optionB background drawables, so the highlighted border never moved.
+        optionA.setOnClickListener(v -> selectVersion(true));
+        optionB.setOnClickListener(v -> selectVersion(false));
+
+        view.findViewById(R.id.btnSaveSettings).setOnClickListener(v -> {
+            String version = radioA.isChecked() ? "A" : "B";
+            prefs.edit()
+                    .putString(PREF_VERSION, version)
+                    .putBoolean(PREF_SAVE_VIDEO, switchVideo.isChecked())
+                    .apply();
+            // FIX 5: Was "Settings saved! version" + version — missing space.
             Toast.makeText(requireContext(),
-                    "Settings saved! version" + version + " active",
+                    "Settings saved! Version " + version + " active",
                     Toast.LENGTH_LONG).show();
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
-    });
-        //back button
+        });
+
         view.findViewById(R.id.btnBack).setOnClickListener(v ->
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());
-}}
+    }
+
+    /**
+     * Selects version A (isA=true) or B (isA=false).
+     * Updates both the radio button checked states AND the container backgrounds
+     * so the highlighted border matches the current selection.
+     */
+    private void selectVersion(boolean isA) {
+        radioA.setChecked(isA);
+        radioB.setChecked(!isA);
+        optionA.setBackgroundResource(isA  ? R.drawable.option_selected : R.drawable.option_unselected);
+        optionB.setBackgroundResource(!isA ? R.drawable.option_selected : R.drawable.option_unselected);
+    }
+}

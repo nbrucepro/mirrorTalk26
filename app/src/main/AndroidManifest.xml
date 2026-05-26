@@ -4,6 +4,12 @@
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!--
+        FIX 1: INTERNET was completely missing. Without it, AiCoachHelper's
+        HttpURLConnection is silently blocked by the OS and coaching tips
+        always fall back to the "Could not reach coaching server" error.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
@@ -34,7 +40,6 @@
         <!--
             FileProvider: required so VideoView and ShareCompat can open
             app-private MP4 files via a content:// URI on Android 7+ (API 24+).
-            Raw file:// paths trigger a FileUriExposedException / "Can't play video".
         -->
         <provider
             android:name="androidx.core.content.FileProvider"

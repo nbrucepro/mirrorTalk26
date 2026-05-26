@@ -65,7 +65,6 @@ public class RecordingFragment extends Fragment {
     private boolean                shouldSaveVideo = false;
 
     private boolean isPaused   = false;
-    // FIX 3: guard to prevent double-fire and reset timer correctly
     private boolean isStopping = false;
 
     private int    secondsElapsed = 0;
@@ -93,7 +92,6 @@ public class RecordingFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // FIX 3: Reset on every fresh entry
         secondsElapsed = 0;
         isStopping     = false;
 
@@ -111,7 +109,6 @@ public class RecordingFragment extends Fragment {
         btnPauseResume      = view.findViewById(R.id.btnPauseResume);
         btnStop             = view.findViewById(R.id.btnStop);
 
-        // FIX 3: Force display to 0:00 before first tick
         tvTimer.setText("0:00");
 
         viewModel = new ViewModelProvider(this).get(RecordingViewModel.class);
@@ -233,7 +230,6 @@ public class RecordingFragment extends Fragment {
                     if (event instanceof VideoRecordEvent.Finalize) {
                         VideoRecordEvent.Finalize fin = (VideoRecordEvent.Finalize) event;
                         if (fin.hasError()) videoFilePath = "";
-                        // FIX 1: navigate only after MP4 container is fully written
                         if (isStopping) navigateToResult();
                     }
                 });
@@ -304,9 +300,10 @@ public class RecordingFragment extends Fragment {
         if (isStopping) return;
         isStopping = true;
 
-        // FIX 3: Kill and reset timer right away — display shows 0:00 instantly
         timerHandler.removeCallbacks(timerRunnable);
-        tvTimer.setText("0:00");
+        // FIX 6: Removed tvTimer.setText("0:00") — it was resetting the display
+        // to 0:00 while waiting for the Finalize event, causing a jarring flash.
+        // The timer now keeps showing the final elapsed time until navigation fires.
 
         if (speechRecognizer != null) {
             speechRecognizer.stopListening();
@@ -315,8 +312,6 @@ public class RecordingFragment extends Fragment {
         }
 
         if (shouldSaveVideo && activeRecording != null) {
-            // FIX 1: Stop recording; navigation fires from the Finalize event
-            // so the MP4 is guaranteed to be fully written before ResultFragment opens it.
             activeRecording.stop();
             activeRecording = null;
         } else {

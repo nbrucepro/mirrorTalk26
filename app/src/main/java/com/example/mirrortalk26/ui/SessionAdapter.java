@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mirrortalk26.R;
 import com.example.mirrortalk26.data.SpeechSession;
+import com.example.mirrortalk26.util.ScoreUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -34,16 +35,14 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
     private OnSessionClickListener    clickListener;
     private OnCompareSelectedListener compareListener;
 
-    public void setOnSessionClickListener(OnSessionClickListener l)    { clickListener  = l; }
+    public void setOnSessionClickListener(OnSessionClickListener l)      { clickListener  = l; }
     public void setOnCompareSelectedListener(OnCompareSelectedListener l) { compareListener = l; }
 
-    private List<SpeechSession> sessions   = new ArrayList<>();
-    // IDs of sessions the user has long-pressed for comparison
-    private final Set<Long>     selected   = new HashSet<>();
+    private List<SpeechSession> sessions = new ArrayList<>();
+    private final Set<Long>     selected = new HashSet<>();
 
     public void setSessions(List<SpeechSession> newSessions) {
         this.sessions = newSessions;
-        // Clear stale selections when list refreshes
         selected.clear();
         notifyDataSetChanged();
     }
@@ -70,38 +69,28 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
         holder.tvEye.setText((int) session.eyeContactPercent + "%");
         holder.tvDuration.setText(session.durationSeconds + "s");
 
-        // Confidence score
-        float wpmScore;
-        int wpm = (int) session.averageWpm;
-        if      (wpm >= 120 && wpm <= 160) wpmScore = 100f;
-        else if (wpm >= 100)               wpmScore = 75f;
-        else if (wpm > 0)                  wpmScore = 40f;
-        else                               wpmScore = 0f;
-        float fillerScore = Math.max(0f, 100f - (session.fillerWordCount * 10f));
-        int score = (int)((session.eyeContactPercent * 0.40f)
-                + (wpmScore * 0.35f) + (fillerScore * 0.25f));
+        // FIX 3: Use ScoreUtils so History card scores match ResultFragment exactly.
+        // Old code was "else if (wpm >= 100) wpmScore = 75f" — never penalised WPM > 180.
+        int score = ScoreUtils.computeScore(
+                session.averageWpm, session.fillerWordCount, session.eyeContactPercent);
         holder.tvScore.setText(score + "");
         if      (score >= 80) holder.tvScore.setTextColor(0xFF1D9E75);
         else if (score >= 60) holder.tvScore.setTextColor(0xFF7F77DD);
         else if (score >= 40) holder.tvScore.setTextColor(0xFFFFCC44);
         else                  holder.tvScore.setTextColor(0xFFFF6B6B);
 
-        // Highlight selected-for-comparison items
         boolean isSelected = selected.contains(session.id);
         holder.itemView.setAlpha(isSelected ? 1.0f : 0.85f);
         holder.itemView.setBackgroundColor(isSelected ? 0xFF1A2A3A : 0x00000000);
 
-        // Tap: navigate to result (only when nothing selected for compare)
         holder.itemView.setOnClickListener(v -> {
             if (selected.isEmpty()) {
                 if (clickListener != null) clickListener.onSessionClick(session.id);
             } else {
-                // While in compare-select mode, taps also toggle selection
                 toggleSelection(session.id, position);
             }
         });
 
-        // Long-press: enter or extend compare-selection mode
         holder.itemView.setOnLongClickListener(v -> {
             toggleSelection(session.id, position);
             return true;
@@ -118,11 +107,9 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
                 notifyItemChanged(position);
             }
         }
-        // Fire comparison as soon as exactly 2 are chosen
         if (selected.size() == 2 && compareListener != null) {
             Long[] ids = selected.toArray(new Long[0]);
             compareListener.onTwoSelected(ids[0], ids[1]);
-            // Clear selection after firing
             selected.clear();
             notifyDataSetChanged();
         }

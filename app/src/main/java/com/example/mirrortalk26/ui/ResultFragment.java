@@ -20,6 +20,7 @@ import com.example.mirrortalk26.analysis.SpeechAnalyzer;
 import com.example.mirrortalk26.data.AppDatabase;
 import com.example.mirrortalk26.data.SpeechSession;
 import com.example.mirrortalk26.gamification.GamificationManager;
+import com.example.mirrortalk26.util.ScoreUtils;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -128,18 +129,8 @@ public class ResultFragment extends Fragment {
         ((TextView) view.findViewById(R.id.tvTranscript))
                 .setText(session.transcript.isEmpty() ? "No transcript recorded" : session.transcript);
 
-        // ── Confidence Score ───────────────────────────────────────────────────
-        float wpmScore;
-        if      (wpm >= 120 && wpm <= 160) wpmScore = 100f;
-        else if (wpm >= 100 && wpm < 120)  wpmScore = 75f;
-        else if (wpm > 160 && wpm <= 180)  wpmScore = 75f;
-        else if (wpm > 0)                  wpmScore = 40f;
-        else                               wpmScore = 0f;
-
-        float fillerScore = Math.max(0f, 100f - (fillers * 10f));
-        int score = (int) ((session.eyeContactPercent * 0.40f)
-                + (wpmScore                 * 0.35f)
-                + (fillerScore              * 0.25f));
+        // ── Confidence Score ── uses ScoreUtils so all screens agree ──────────
+        int score = ScoreUtils.computeScore(session.averageWpm, fillers, session.eyeContactPercent);
         computedScore = score;
 
         TextView tvScore    = view.findViewById(R.id.tvConfidenceScore);
@@ -236,16 +227,14 @@ public class ResultFragment extends Fragment {
         return xp;
     }
 
-    // ── Standard share ─────────────────────────────────────────────────────────
     private void shareSession(SpeechSession s, int score) {
         String date = new SimpleDateFormat("MMM dd, yyyy 'at' HH:mm", Locale.getDefault())
                 .format(new Date(s.timestamp));
         int mins = s.durationSeconds / 60, secs = s.durationSeconds % 60;
-        String scoreLabel = score >= 80 ? "Excellent 🏆" : score >= 60 ? "Good 💪"
-                : score >= 40 ? "Getting there 📈" : "Keep going 🎯";
+        String label = ScoreUtils.scoreLabel(score);
 
         String text = "🎙 MirrorTalk Session — " + date + "\n\n"
-                + "  Confidence score : " + score + " / 100 (" + scoreLabel + ")\n"
+                + "  Confidence score : " + score + " / 100 (" + label + ")\n"
                 + "  Duration         : " + String.format("%d:%02d", mins, secs) + "\n"
                 + "  Words per minute : " + (int) s.averageWpm + " WPM\n"
                 + "  Filler words     : " + s.fillerWordCount + "\n"
@@ -257,7 +246,6 @@ public class ResultFragment extends Fragment {
                 .setText(text).setChooserTitle("Share session results").startChooser();
     }
 
-    // ── Challenge share: dares someone to beat your score ─────────────────────
     private void shareChallenge(SpeechSession s, int score) {
         String date = new SimpleDateFormat("MMM dd", Locale.getDefault())
                 .format(new Date(s.timestamp));
