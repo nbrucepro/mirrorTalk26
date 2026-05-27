@@ -2,15 +2,30 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/homeFragment">
+    app:startDestination="@id/onboardingFragment">
+
+    <!-- Onboarding: shown once on first launch (FR-1) -->
+    <fragment
+        android:id="@+id/onboardingFragment"
+        android:name="com.example.mirrortalk26.ui.OnboardingFragment"
+        android:label="Welcome">
+        <action
+            android:id="@+id/action_onboarding_to_home"
+            app:destination="@id/homeFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popUpTo="@id/onboardingFragment"
+            app:popUpToInclusive="true"/>
+    </fragment>
 
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.example.mirrortalk26.ui.HomeFragment"
         android:label="Home">
+        <!-- Route through countdown before recording -->
         <action
-            android:id="@+id/action_home_to_recording"
-            app:destination="@id/recordingFragment"
+            android:id="@+id/action_home_to_countdown"
+            app:destination="@id/countdownFragment"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
@@ -22,6 +37,20 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right"/>
+    </fragment>
+
+    <!-- Countdown: 3-2-1 before recording starts -->
+    <fragment
+        android:id="@+id/countdownFragment"
+        android:name="com.example.mirrortalk26.ui.CountdownFragment"
+        android:label="Get Ready">
+        <action
+            android:id="@+id/action_countdown_to_recording"
+            app:destination="@id/recordingFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popUpTo="@id/countdownFragment"
+            app:popUpToInclusive="true"/>
     </fragment>
 
     <fragment
@@ -57,7 +86,6 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right"/>
-        <!-- NEW: navigate to comparison screen -->
         <action
             android:id="@+id/action_history_to_compare"
             app:destination="@id/compareFragment"
@@ -72,23 +100,23 @@
         android:name="com.example.mirrortalk26.ui.SettingsFragment"
         android:label="Settings"/>
 
-    <!-- NEW: Achievements screen -->
     <fragment
         android:id="@+id/achievementsFragment"
         android:name="com.example.mirrortalk26.ui.AchievementsFragment"
         android:label="Achievements"/>
 
-    <!-- NEW: Side-by-side session comparison -->
     <fragment
         android:id="@+id/compareFragment"
         android:name="com.example.mirrortalk26.ui.CompareFragment"
         android:label="Compare">
-        <argument
-            android:name="sessionIdA"
-            app:argType="long"/>
-        <argument
-            android:name="sessionIdB"
-            app:argType="long"/>
+        <argument android:name="sessionIdA" app:argType="long"/>
+        <argument android:name="sessionIdB" app:argType="long"/>
     </fragment>
+
+    <!-- Export: FR-12 CSV export -->
+    <fragment
+        android:id="@+id/exportFragment"
+        android:name="com.example.mirrortalk26.ui.ExportFragment"
+        android:label="Export"/>
 
 </navigation>

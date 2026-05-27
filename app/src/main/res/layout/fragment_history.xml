@@ -8,6 +8,7 @@
     android:background="#0D0D1A">
 
     <!-- Header -->
+    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
@@ -43,6 +44,16 @@
             android:textColor="#555577"
             android:textSize="12sp"
             android:visibility="gone"/>
+
+        <!-- ADD THIS BUTTON -->
+        <ImageButton
+            android:id="@+id/btnExport"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:src="@drawable/ic_export"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Export Data"
+        android:padding="10dp"/>
     </LinearLayout>
 
     <!-- Chart card -->

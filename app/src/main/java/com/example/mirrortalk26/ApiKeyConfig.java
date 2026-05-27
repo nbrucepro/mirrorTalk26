@@ -9,7 +9,7 @@ package com.example.mirrortalk26;
  * Get your key at: https://console.anthropic.com/
  */
 public final class ApiKeyConfig {
-    public static final String ANTHROPIC_API_KEY = "sk-ant-REPLACE_WITH_YOUR_KEY";
+    public static final String GEMINI_API_KEY  = "AIzaSyAc7cPWundfD8W4jTtuIh1iVJbGbvoHlao";
 
     private ApiKeyConfig() {}
 }

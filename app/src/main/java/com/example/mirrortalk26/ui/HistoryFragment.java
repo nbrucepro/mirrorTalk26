@@ -1,6 +1,11 @@
 package com.example.mirrortalk26.ui;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +14,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -18,6 +24,7 @@ import com.example.mirrortalk26.R;
 import com.example.mirrortalk26.data.AppDatabase;
 import com.example.mirrortalk26.data.SpeechSession;
 import com.example.mirrortalk26.repository.SessionRepository;
+import com.example.mirrortalk26.util.ScoreUtils;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
@@ -32,6 +39,10 @@ import java.util.List;
 
 public class HistoryFragment extends Fragment {
 
+    // FIX: create Paint once — not on every draw frame during swipe
+    private final Paint bgPaint   = new Paint();
+    private final Paint iconPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
@@ -43,19 +54,20 @@ public class HistoryFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        RecyclerView recycler   = view.findViewById(R.id.recyclerSessions);
-        TextView     tvEmpty    = view.findViewById(R.id.tvEmpty);
+        RecyclerView recycler     = view.findViewById(R.id.recyclerSessions);
+        TextView     tvEmpty      = view.findViewById(R.id.tvEmpty);
         TextView     tvCompareHint = view.findViewById(R.id.tvCompareHint);
-        LineChart    chart      = view.findViewById(R.id.lineChart);
+        LineChart    chart        = view.findViewById(R.id.lineChart);
 
         view.findViewById(R.id.btnBack).setOnClickListener(v ->
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());
+        view.findViewById(R.id.btnExport).setOnClickListener(v ->
+                Navigation.findNavController(v).navigate(R.id.exportFragment));
 
         SessionAdapter adapter = new SessionAdapter();
         recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         recycler.setAdapter(adapter);
 
-        // ── Tap → session result ──────────────────────────────────────────────
         adapter.setOnSessionClickListener(sessionId -> {
             Bundle bundle = new Bundle();
             bundle.putLong("sessionId", sessionId);
@@ -63,7 +75,6 @@ public class HistoryFragment extends Fragment {
                     .navigate(R.id.action_history_to_result, bundle);
         });
 
-        // ── Long-press × 2 → comparison ───────────────────────────────────────
         adapter.setOnCompareSelectedListener((idA, idB) -> {
             Bundle bundle = new Bundle();
             bundle.putLong("sessionIdA", idA);
@@ -72,45 +83,66 @@ public class HistoryFragment extends Fragment {
                     .navigate(R.id.action_history_to_compare, bundle);
         });
 
-        // ── Swipe-to-delete ───────────────────────────────────────────────────
+        // ── Swipe-to-delete ────────────────────────────────────────────────────
+        bgPaint.setColor(0xFFFF4444);
+
+        // Load ic_delete as a bitmap once for canvas drawing
+        Drawable deleteDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.ic_delete);
+        Bitmap   deleteBitmap   = null;
+        if (deleteDrawable != null) {
+            int size = (int)(24 * getResources().getDisplayMetrics().density);
+            deleteDrawable.setBounds(0, 0, size, size);
+            deleteBitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+            Canvas bmpCanvas = new Canvas(deleteBitmap);
+            deleteDrawable.setTint(0xFFFFFFFF);
+            deleteDrawable.draw(bmpCanvas);
+        }
+        final Bitmap finalDeleteBitmap = deleteBitmap;
+
         SessionRepository repo = new SessionRepository(requireActivity().getApplication());
+
         new androidx.recyclerview.widget.ItemTouchHelper(
-                new androidx.recyclerview.widget.ItemTouchHelper.SimpleCallback(
-                        0, androidx.recyclerview.widget.ItemTouchHelper.LEFT) {
-                    @Override public boolean onMove(@NonNull RecyclerView rv,
-                                                    @NonNull RecyclerView.ViewHolder vh,
-                                                    @NonNull RecyclerView.ViewHolder t) { return false; }
+            new androidx.recyclerview.widget.ItemTouchHelper.SimpleCallback(
+                    0, androidx.recyclerview.widget.ItemTouchHelper.LEFT) {
 
-                    @Override public void onSwiped(@NonNull RecyclerView.ViewHolder vh, int dir) {
-                        int pos = vh.getAdapterPosition();
-                        SpeechSession s = adapter.getSessionAt(pos);
-                        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                                .setTitle("Delete Session")
-                                .setMessage("Delete this session from " +
-                                        new java.text.SimpleDateFormat("MMM dd, HH:mm",
-                                                java.util.Locale.getDefault())
-                                                .format(new java.util.Date(s.timestamp)) + "?")
-                                .setPositiveButton("Delete", (d, w) -> repo.deleteById(s.id))
-                                .setNegativeButton("Cancel", (d, w) -> adapter.notifyItemChanged(pos))
-                                .setOnCancelListener(d -> adapter.notifyItemChanged(pos))
-                                .show();
-                    }
+                @Override public boolean onMove(@NonNull RecyclerView rv,
+                                                @NonNull RecyclerView.ViewHolder vh,
+                                                @NonNull RecyclerView.ViewHolder t) { return false; }
 
-                    @Override public void onChildDraw(@NonNull android.graphics.Canvas c,
-                                                      @NonNull RecyclerView rv, @NonNull RecyclerView.ViewHolder vh,
-                                                      float dX, float dY, int state, boolean active) {
-                        android.graphics.Paint p = new android.graphics.Paint();
-                        p.setColor(0xFFFF4444);
-                        c.drawRect(vh.itemView.getRight() + dX, vh.itemView.getTop(),
-                                vh.itemView.getRight(), vh.itemView.getBottom(), p);
-                        p.setColor(0xFFFFFFFF);
-                        p.setTextSize(36f);
-                        p.setTextAlign(android.graphics.Paint.Align.CENTER);
-                        c.drawText("🗑", vh.itemView.getRight() - 60,
-                                vh.itemView.getTop() + vh.itemView.getHeight() / 2f + 12f, p);
-                        super.onChildDraw(c, rv, vh, dX, dY, state, active);
-                    }
+                @Override public void onSwiped(@NonNull RecyclerView.ViewHolder vh, int dir) {
+                    int pos = vh.getAdapterPosition();
+                    SpeechSession s = adapter.getSessionAt(pos);
+                    new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                            .setTitle("Delete Session")
+                            .setMessage("Delete this session from " +
+                                    new java.text.SimpleDateFormat("MMM dd, HH:mm",
+                                            java.util.Locale.getDefault())
+                                            .format(new java.util.Date(s.timestamp)) + "?")
+                            .setPositiveButton("Delete", (d, w) -> repo.deleteById(s.id))
+                            .setNegativeButton("Cancel", (d, w) -> adapter.notifyItemChanged(pos))
+                            .setOnCancelListener(d -> adapter.notifyItemChanged(pos))
+                            .show();
                 }
+
+                @Override public void onChildDraw(@NonNull Canvas c,
+                                                   @NonNull RecyclerView rv,
+                                                   @NonNull RecyclerView.ViewHolder vh,
+                                                   float dX, float dY, int state, boolean active) {
+                    // Red background
+                    c.drawRect(vh.itemView.getRight() + dX, vh.itemView.getTop(),
+                            vh.itemView.getRight(), vh.itemView.getBottom(), bgPaint);
+
+                    // Delete icon (vector bitmap, no emoji)
+                    if (finalDeleteBitmap != null) {
+                        float iconTop = vh.itemView.getTop()
+                                + (vh.itemView.getHeight() - finalDeleteBitmap.getHeight()) / 2f;
+                        float iconLeft = vh.itemView.getRight() - finalDeleteBitmap.getWidth() - 32;
+                        c.drawBitmap(finalDeleteBitmap, iconLeft, iconTop, iconPaint);
+                    }
+
+                    super.onChildDraw(c, rv, vh, dX, dY, state, active);
+                }
+            }
         ).attachToRecyclerView(recycler);
 
         // ── Observe sessions ──────────────────────────────────────────────────
@@ -130,12 +162,11 @@ public class HistoryFragment extends Fragment {
                     tvEmpty.setVisibility(View.GONE);
                     recycler.setVisibility(View.VISIBLE);
                     chart.setVisibility(View.VISIBLE);
-                    // Show compare hint only when there are ≥ 2 sessions
                     tvCompareHint.setVisibility(sessions.size() >= 2 ? View.VISIBLE : View.GONE);
 
                     adapter.setSessions(sessions);
 
-                    // ── Build chart data (oldest → newest) ─────────────────────
+                    // ── Chart (oldest → newest) ──────────────────────────────
                     List<SpeechSession> chron = new ArrayList<>(sessions);
                     Collections.reverse(chron);
 
@@ -145,21 +176,11 @@ public class HistoryFragment extends Fragment {
                     for (int i = 0; i < chron.size(); i++) {
                         SpeechSession s = chron.get(i);
                         wpmEntries.add(new Entry(i, s.averageWpm));
-
-                        float wpmScore;
-                        int wpm = (int) s.averageWpm;
-                        if      (wpm >= 120 && wpm <= 160) wpmScore = 100f;
-                        else if (wpm >= 100 && wpm < 120)  wpmScore = 75f;
-                        else if (wpm > 160 && wpm <= 180)  wpmScore = 75f;
-                        else if (wpm > 0)                  wpmScore = 40f;
-                        else                               wpmScore = 0f;
-                        float fillerScore = Math.max(0f, 100f - (s.fillerWordCount * 10f));
-                        float score = (s.eyeContactPercent * 0.40f)
-                                + (wpmScore * 0.35f) + (fillerScore * 0.25f);
+                        // FIX: use ScoreUtils so chart confidence matches ResultFragment exactly
+                        float score = ScoreUtils.computeScore(s.averageWpm, s.fillerWordCount, s.eyeContactPercent);
                         scoreEntries.add(new Entry(i, score));
                     }
 
-                    // WPM — purple, left axis (0–350)
                     LineDataSet wpmSet = new LineDataSet(wpmEntries, "WPM");
                     wpmSet.setColor(Color.parseColor("#7F77DD"));
                     wpmSet.setCircleColor(Color.parseColor("#7F77DD"));
@@ -172,7 +193,6 @@ public class HistoryFragment extends Fragment {
                     wpmSet.setFillAlpha(60);
                     wpmSet.setAxisDependency(YAxis.AxisDependency.LEFT);
 
-                    // Confidence — green dashed, right axis (0–100)
                     LineDataSet scoreSet = new LineDataSet(scoreEntries, "Confidence");
                     scoreSet.setColor(Color.parseColor("#1D9E75"));
                     scoreSet.setCircleColor(Color.parseColor("#1D9E75"));

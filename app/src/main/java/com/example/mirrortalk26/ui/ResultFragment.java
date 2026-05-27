@@ -1,5 +1,6 @@
 package com.example.mirrortalk26.ui;
 
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -21,6 +22,8 @@ import com.example.mirrortalk26.data.AppDatabase;
 import com.example.mirrortalk26.data.SpeechSession;
 import com.example.mirrortalk26.gamification.GamificationManager;
 import com.example.mirrortalk26.util.ScoreUtils;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -32,10 +35,20 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
+/**
+ * ResultFragment — matches ORIGINAL fragment_result.xml IDs exactly.
+ * 
+ * FIXES vs previous version:
+ *   - Removed ivWpmStatus (not in original layout) — uses tvWpmFeedback text colour instead
+ *   - Removed tvPbWpm/tvPbEye/tvPbFiller chips (not in original layout) — PB noted in score message
+ *   - Removed duplicate computeXp() — uses GamificationManager.getLastSessionXp()
+ *   - aiCoach.cancel() called on onDestroyView()
+ */
 public class ResultFragment extends Fragment {
 
-    private SpeechSession loadedSession;
-    private int           computedScore;
+    private SpeechSession  loadedSession;
+    private int            computedScore;
+    private final AiCoachHelper aiCoach = new AiCoachHelper();
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -56,7 +69,7 @@ public class ResultFragment extends Fragment {
                     .getInstance(requireContext())
                     .sessionDao()
                     .getSessionById(sessionId);
-            if (session == null) return;
+            if (session == null || !isAdded()) return;
             requireActivity().runOnUiThread(() -> bindUI(view, session));
         });
 
@@ -76,24 +89,31 @@ public class ResultFragment extends Fragment {
         loadedSession = session;
 
         // ── Timestamp ──────────────────────────────────────────────────────────
-        String date = new SimpleDateFormat("MMM dd, yyyy  HH:mm", Locale.getDefault())
-                .format(new Date(session.timestamp));
-        ((TextView) view.findViewById(R.id.tvTimestamp)).setText(date);
+        ((TextView) view.findViewById(R.id.tvTimestamp)).setText(
+                new SimpleDateFormat("MMM dd, yyyy  HH:mm", Locale.getDefault())
+                        .format(new Date(session.timestamp)));
 
         // ── Duration ───────────────────────────────────────────────────────────
-        int mins = session.durationSeconds / 60;
-        int secs = session.durationSeconds % 60;
-        ((TextView) view.findViewById(R.id.tvDuration))
-                .setText(String.format("%d:%02d", mins, secs));
+        ((TextView) view.findViewById(R.id.tvDuration)).setText(
+                String.format("%d:%02d", session.durationSeconds / 60, session.durationSeconds % 60));
 
         // ── WPM ────────────────────────────────────────────────────────────────
         int wpm = (int) session.averageWpm;
         TextView tvWpmResult   = view.findViewById(R.id.tvWpmResult);
         TextView tvWpmFeedback = view.findViewById(R.id.tvWpmFeedback);
         tvWpmResult.setText(wpm + " WPM");
-        if      (wpm < 100) { tvWpmFeedback.setText("⚠ Too slow — try to speak faster");  tvWpmFeedback.setTextColor(0xFFFF6B6B); }
-        else if (wpm > 180) { tvWpmFeedback.setText("⚠ Too fast — slow down a little");   tvWpmFeedback.setTextColor(0xFFFFCC44); }
-        else                { tvWpmFeedback.setText("✓ Great pace! Keep it up");           tvWpmFeedback.setTextColor(0xFF1D9E75); }
+
+        // NOTE: original layout has no ivWpmStatus; colour the feedback text instead
+        if (wpm < 100) {
+            tvWpmFeedback.setText("Too slow — try to speak faster");
+            tvWpmFeedback.setTextColor(0xFFFF6B6B);
+        } else if (wpm > 180) {
+            tvWpmFeedback.setText("Too fast — slow down a little");
+            tvWpmFeedback.setTextColor(0xFFFFCC44);
+        } else {
+            tvWpmFeedback.setText("Great pace — keep it up");
+            tvWpmFeedback.setTextColor(0xFF1D9E75);
+        }
 
         // ── Filler words ───────────────────────────────────────────────────────
         int fillers = session.fillerWordCount;
@@ -114,7 +134,7 @@ public class ResultFragment extends Fragment {
                 }
                 tvBreakdown.setText(sb.toString());
             } else {
-                tvBreakdown.setText("No filler words detected 🎉");
+                tvBreakdown.setText("No filler words detected");
                 tvBreakdown.setTextColor(0xFF1D9E75);
             }
         }
@@ -126,47 +146,67 @@ public class ResultFragment extends Fragment {
         tvEye.setTextColor(eye >= 60 ? 0xFF1D9E75 : 0xFFFF6B6B);
 
         // ── Transcript ─────────────────────────────────────────────────────────
-        ((TextView) view.findViewById(R.id.tvTranscript))
-                .setText(session.transcript.isEmpty() ? "No transcript recorded" : session.transcript);
+        ((TextView) view.findViewById(R.id.tvTranscript)).setText(
+                session.transcript.isEmpty() ? "No transcript recorded" : session.transcript);
 
-        // ── Confidence Score ── uses ScoreUtils so all screens agree ──────────
+        // ── Confidence score ───────────────────────────────────────────────────
         int score = ScoreUtils.computeScore(session.averageWpm, fillers, session.eyeContactPercent);
         computedScore = score;
 
         TextView tvScore    = view.findViewById(R.id.tvConfidenceScore);
         TextView tvScoreMsg = view.findViewById(R.id.tvScoreMessage);
         tvScore.setText(String.valueOf(score));
-        if      (score >= 80) { tvScore.setTextColor(0xFF1D9E75); tvScoreMsg.setText("🏆 Excellent — competition ready!"); tvScoreMsg.setTextColor(0xFF1D9E75); }
-        else if (score >= 60) { tvScore.setTextColor(0xFF7F77DD); tvScoreMsg.setText("💪 Good — keep practising");         tvScoreMsg.setTextColor(0xFF7F77DD); }
-        else if (score >= 40) { tvScore.setTextColor(0xFFFFCC44); tvScoreMsg.setText("📈 Getting there — focus on eye contact"); tvScoreMsg.setTextColor(0xFFFFCC44); }
-        else                  { tvScore.setTextColor(0xFFFF6B6B); tvScoreMsg.setText("🎯 Keep going — practice makes perfect");  tvScoreMsg.setTextColor(0xFFFF6B6B); }
+        int scoreColor = ScoreUtils.scoreColor(score);
+        tvScore.setTextColor(scoreColor);
+        tvScoreMsg.setTextColor(scoreColor);
 
-        // ── Gamification: record session & show new badges ─────────────────────
+        if      (score >= 80) tvScoreMsg.setText("Excellent — competition ready!");
+        else if (score >= 60) tvScoreMsg.setText("Good — keep practising");
+        else if (score >= 40) tvScoreMsg.setText("Getting there — focus on eye contact");
+        else                  tvScoreMsg.setText("Keep going — practice makes perfect");
+
+        // ── Gamification ───────────────────────────────────────────────────────
         GamificationManager gm = new GamificationManager(requireContext());
         List<GamificationManager.Badge> newBadges = gm.recordSession(session, score);
 
-        TextView tvXpEarned = view.findViewById(R.id.tvXpEarned);
-        tvXpEarned.setText("+" + computeXp(session, score) + " XP  •  Level " + gm.getLevel());
+        // FIX: getLastSessionXp() — no duplicate formula
+        int xpEarned = gm.getLastSessionXp();
+        ((TextView) view.findViewById(R.id.tvXpEarned))
+                .setText("+" + xpEarned + " XP  •  Level " + gm.getLevel());
 
+        // Personal best note — append to score message if applicable
+        GamificationManager gmRead = new GamificationManager(requireContext());
+        boolean pbWpm    = wpm > 0 && wpm >= gmRead.getPbWpm();
+        boolean pbEye    = eye > 0 && eye >= (int) gmRead.getPbEye();
+        boolean pbFiller = gmRead.getPbFiller() >= 0 && fillers <= gmRead.getPbFiller();
+        if (pbWpm || pbEye || pbFiller) {
+            StringBuilder pb = new StringBuilder("Personal best: ");
+            if (pbWpm)    pb.append("WPM ");
+            if (pbEye)    pb.append("Eye contact ");
+            if (pbFiller) pb.append("Fewest fillers");
+            tvScoreMsg.setText(tvScoreMsg.getText() + "\n" + pb.toString().trim());
+        }
+
+        // New badge toast
         if (!newBadges.isEmpty()) {
-            View badgeToast = view.findViewById(R.id.newBadgeCard);
-            badgeToast.setVisibility(View.VISIBLE);
-            StringBuilder badgeText = new StringBuilder("🎉 New badge");
+            View badgeCard = view.findViewById(R.id.newBadgeCard);
+            badgeCard.setVisibility(View.VISIBLE);
+            StringBuilder badgeText = new StringBuilder("Badge");
             if (newBadges.size() > 1) badgeText.append("s");
             badgeText.append(" unlocked: ");
             for (int i = 0; i < newBadges.size(); i++) {
                 if (i > 0) badgeText.append(", ");
-                badgeText.append(newBadges.get(i).emoji).append(" ").append(newBadges.get(i).title);
+                badgeText.append(newBadges.get(i).title);
             }
             ((TextView) view.findViewById(R.id.tvNewBadge)).setText(badgeText.toString());
         }
 
-        // ── AI Coaching tips (async) ───────────────────────────────────────────
+        // ── AI Coaching (async) ────────────────────────────────────────────────
         TextView tvCoachTitle = view.findViewById(R.id.tvCoachTitle);
         TextView tvCoachTips  = view.findViewById(R.id.tvCoachTips);
         tvCoachTitle.setText("Fetching your personalised tips…");
 
-        AiCoachHelper.fetchTips(wpm, fillers, session.eyeContactPercent,
+        aiCoach.fetchTips(wpm, fillers, session.eyeContactPercent,
                 session.transcript, new AiCoachHelper.CoachCallback() {
                     @Override public void onResult(String tips) {
                         if (!isAdded()) return;
@@ -179,16 +219,16 @@ public class ResultFragment extends Fragment {
                         if (!isAdded()) return;
                         requireActivity().runOnUiThread(() -> {
                             tvCoachTitle.setText("AI Coach");
-                            tvCoachTips.setText("Could not load tips right now — check your internet connection.");
+                            tvCoachTips.setText("Could not load tips — check your internet connection.");
                         });
                     }
                 });
 
         // ── Video playback ─────────────────────────────────────────────────────
-        androidx.cardview.widget.CardView cardVideo = view.findViewById(R.id.cardVideo);
-        android.widget.VideoView videoView           = view.findViewById(R.id.videoView);
-        com.google.android.material.button.MaterialButton btnPlay   = view.findViewById(R.id.btnPlayPause);
-        com.google.android.material.button.MaterialButton btnReplay = view.findViewById(R.id.btnReplay);
+        View cardVideo = view.findViewById(R.id.cardVideo);
+        android.widget.VideoView videoView = view.findViewById(R.id.videoView);
+        MaterialButton btnPlay   = view.findViewById(R.id.btnPlayPause);
+        MaterialButton btnReplay = view.findViewById(R.id.btnReplay);
 
         if (session.videoPath != null && !session.videoPath.isEmpty()) {
             File f = new File(session.videoPath);
@@ -218,23 +258,18 @@ public class ResultFragment extends Fragment {
         }
     }
 
-    private int computeXp(SpeechSession s, int score) {
-        int xp = 10;
-        if (score >= 60) xp += 5;
-        if (score >= 80) xp += 10;
-        if (s.fillerWordCount == 0) xp += 5;
-        if (s.eyeContactPercent >= 80) xp += 5;
-        return xp;
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        aiCoach.cancel();
     }
 
     private void shareSession(SpeechSession s, int score) {
         String date = new SimpleDateFormat("MMM dd, yyyy 'at' HH:mm", Locale.getDefault())
                 .format(new Date(s.timestamp));
         int mins = s.durationSeconds / 60, secs = s.durationSeconds % 60;
-        String label = ScoreUtils.scoreLabel(score);
-
-        String text = "🎙 MirrorTalk Session — " + date + "\n\n"
-                + "  Confidence score : " + score + " / 100 (" + label + ")\n"
+        String text = "MirrorTalk Session — " + date + "\n\n"
+                + "  Confidence score : " + score + " / 100 (" + ScoreUtils.scoreLabel(score) + ")\n"
                 + "  Duration         : " + String.format("%d:%02d", mins, secs) + "\n"
                 + "  Words per minute : " + (int) s.averageWpm + " WPM\n"
                 + "  Filler words     : " + s.fillerWordCount + "\n"
@@ -249,14 +284,13 @@ public class ResultFragment extends Fragment {
     private void shareChallenge(SpeechSession s, int score) {
         String date = new SimpleDateFormat("MMM dd", Locale.getDefault())
                 .format(new Date(s.timestamp));
-
-        String text = "🎤 Speaking Challenge from MirrorTalk!\n\n"
+        String text = "Speaking Challenge from MirrorTalk!\n\n"
                 + "I just scored " + score + "/100 on my public speaking session (" + date + ").\n"
                 + "My stats:\n"
                 + "  • " + (int) s.averageWpm + " WPM\n"
                 + "  • " + s.fillerWordCount + " filler words\n"
                 + "  • " + (int) s.eyeContactPercent + "% eye contact\n\n"
-                + "Think you can beat " + score + "/100? 🏆\n"
+                + "Think you can beat " + score + "/100?\n"
                 + "Download MirrorTalk and take the challenge!";
 
         ShareCompat.IntentBuilder.from(requireActivity())

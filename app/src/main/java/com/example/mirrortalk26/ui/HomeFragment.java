@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.preference.PreferenceManager;
 
 import com.example.mirrortalk26.R;
 import com.example.mirrortalk26.data.AppDatabase;
@@ -21,6 +22,17 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executors;
 
+/**
+ * HomeFragment — matches ORIGINAL fragment_home.xml IDs exactly:
+ *   btnAchievements, btnSettings, tvSessionCount, tvStreak, tvLevel,
+ *   btnShuffle, tvPrompt, btnStart, btnHistory
+ *
+ * NOTE: fragment_home.xml does NOT have a tvGreeting view, so the
+ * personalised greeting is shown by replacing the subtitle TextView text
+ * (the one that says "AI-powered speaking confidence trainer") via tag lookup,
+ * OR we just set the session count text to include the name.
+ * To keep it simple and non-breaking we set tvSessionCount to "Welcome, Bruce  •  N sessions".
+ */
 public class HomeFragment extends Fragment {
 
     private static final List<String> PROMPTS = Collections.unmodifiableList(Arrays.asList(
@@ -65,11 +77,11 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // ── Session count + gamification badges ───────────────────────────────
-        TextView tvCount  = view.findViewById(R.id.tvSessionCount);
-        TextView tvStreak = view.findViewById(R.id.tvStreak);
-        TextView tvLevel  = view.findViewById(R.id.tvLevel);
+        TextView tvSessionCount = view.findViewById(R.id.tvSessionCount);
+        TextView tvStreak       = view.findViewById(R.id.tvStreak);
+        TextView tvLevel        = view.findViewById(R.id.tvLevel);
 
+        // Load stats on background thread
         Executors.newSingleThreadExecutor().execute(() -> {
             int count = AppDatabase.getInstance(requireContext())
                     .sessionDao().getSessionCount();
@@ -78,28 +90,35 @@ public class HomeFragment extends Fragment {
             int level  = gm.getLevel();
             int xp     = gm.getXp();
 
+            // Personalised greeting: prepend name to session count if set
+            String name = PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getString(OnboardingFragment.PREF_USER_NAME, "");
+            String countLabel = (!name.isEmpty() ? "Hi " + name + "  •  " : "")
+                    + count + (count == 1 ? " session" : " sessions");
+
+            if (!isAdded()) return;
+            String finalCountLabel = countLabel;
             requireActivity().runOnUiThread(() -> {
-                tvCount.setText(count + (count == 1 ? " session" : " sessions") + " completed");
-                tvStreak.setText(streak > 0 ? streak + " day streak 🔥" : "Start your streak today");
+                tvSessionCount.setText(finalCountLabel);
+                tvStreak.setText(streak > 0 ? streak + " day streak" : "Start your streak today");
                 tvLevel.setText("Level " + level + "  ·  " + xp + " XP");
             });
         });
 
-        // ── Navigation ─────────────────────────────────────────────────────────
+        // Navigation — route Start through CountdownFragment
         view.findViewById(R.id.btnStart).setOnClickListener(v ->
-                Navigation.findNavController(view).navigate(R.id.action_home_to_recording));
+                Navigation.findNavController(v).navigate(R.id.action_home_to_countdown));
         view.findViewById(R.id.btnHistory).setOnClickListener(v ->
-                Navigation.findNavController(view).navigate(R.id.historyFragment));
+                Navigation.findNavController(v).navigate(R.id.historyFragment));
         view.findViewById(R.id.btnSettings).setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.action_home_to_settings));
         view.findViewById(R.id.btnAchievements).setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.achievementsFragment));
 
-        // ── Practice Prompts ───────────────────────────────────────────────────
-        TextView tvPrompt   = view.findViewById(R.id.tvPrompt);
-        View     btnShuffle = view.findViewById(R.id.btnShuffle);
+        // Practice prompt
+        TextView tvPrompt = view.findViewById(R.id.tvPrompt);
         showNextPrompt(tvPrompt);
-        btnShuffle.setOnClickListener(v ->
+        view.findViewById(R.id.btnShuffle).setOnClickListener(v ->
                 tvPrompt.animate().alpha(0f).setDuration(150).withEndAction(() -> {
                     showNextPrompt(tvPrompt);
                     tvPrompt.animate().alpha(1f).setDuration(200).start();

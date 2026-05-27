@@ -2,4 +2,18 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- App palette -->
+    <color name="bg_deep">#0D0D1A</color>
+    <color name="bg_card">#1A1A2E</color>
+    <color name="bg_card_alt">#1A1435</color>
+    <color name="accent_purple">#7F77DD</color>
+    <color name="accent_purple_dark">#3C3489</color>
+    <color name="accent_green">#1D9E75</color>
+    <color name="accent_yellow">#FFCC44</color>
+    <color name="accent_red">#FF6B6B</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#AAAACC</color>
+    <color name="text_dim">#444466</color>
+    <color name="divider">#2A2A40</color>
 </resources>

@@ -1,85 +1,68 @@
 package com.example.mirrortalk26.ui;
 
 import android.Manifest;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.preference.PreferenceManager;
-import android.speech.RecognitionListener;
-import android.speech.RecognizerIntent;
-import android.speech.SpeechRecognizer;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
-import androidx.camera.video.FileOutputOptions;
-import androidx.camera.video.Quality;
-import androidx.camera.video.QualitySelector;
-import androidx.camera.video.Recorder;
-import androidx.camera.video.Recording;
-import androidx.camera.video.VideoCapture;
-import androidx.camera.video.VideoRecordEvent;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
+import androidx.preference.PreferenceManager;
 
 import com.example.mirrortalk26.R;
 import com.example.mirrortalk26.analysis.EyeContactAnalyzer;
-import com.example.mirrortalk26.viewmodel.RecordingViewModel;
+import com.example.mirrortalk26.analysis.SpeechAnalyzer;
+import com.example.mirrortalk26.data.AppDatabase;
+import com.example.mirrortalk26.data.SpeechSession;
+import com.google.android.material.button.MaterialButton;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.io.File;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RecordingFragment extends Fragment {
 
-    private PreviewView previewView;
-    private TextView    tvTimer, tvWpm, tvFillers, tvEye, tvPartialTranscript;
-    private Button      btnPauseResume, btnStop;
-    private View        overlayCard;
+    private static final int PERMISSIONS_REQUEST = 1001;
+    private static final int MIN_SESSION_MS      = 5_000;
 
-    private RecordingViewModel viewModel;
-    private SpeechRecognizer   speechRecognizer;
-    private Intent             recognizerIntent;
+    // ── Views ─────────────────────────────────────────────────────────────────
+    // NOTE: IDs match the ORIGINAL fragment_recording.xml exactly:
+    //   tvWpm, tvFillers, tvEye, tvPartialTranscript, btnPauseResume, btnStop, tvTimer
+    private PreviewView    previewView;
+    private TextView       tvWpm, tvFillers, tvEye, tvPartialTranscript, tvTimer;
+    private View           overlayCard;
+    private MaterialButton btnStop, btnPauseResume;
 
-    private VideoCapture<Recorder> videoCapture;
-    private Recording              activeRecording;
-    private String                 videoFilePath = "";
-    private boolean                shouldSaveVideo = false;
+    // ── State ──────────────────────────────────────────────────────────────────
+    private SpeechAnalyzer     speechAnalyzer;
+    private EyeContactAnalyzer eyeContactAnalyzer;
 
-    private boolean isPaused   = false;
-    private boolean isStopping = false;
+    // Eye contact: EyeContactAnalyzer uses a callback, so we track % ourselves
+    private final AtomicInteger eyeFrames   = new AtomicInteger(0);
+    private final AtomicInteger contactFrames = new AtomicInteger(0);
 
-    private int    secondsElapsed = 0;
-    private final Handler  timerHandler  = new Handler(Looper.getMainLooper());
-    private Runnable       timerRunnable;
-    private String         version;
+    private long    sessionStartMs = 0;
+    private boolean isPaused       = false;
+    private boolean isRecording    = false;
 
-    private final ActivityResultLauncher<String[]> permissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), perms -> {
-                boolean camera = Boolean.TRUE.equals(perms.get(Manifest.permission.CAMERA));
-                boolean audio  = Boolean.TRUE.equals(perms.get(Manifest.permission.RECORD_AUDIO));
-                if (camera && audio) startCamera();
-                else Toast.makeText(requireContext(),
-                        "Camera and Microphone permissions required", Toast.LENGTH_LONG).show();
-            });
+    private final Handler mainHandler  = new Handler(Looper.getMainLooper());
+    private final Handler timerHandler = new Handler(Looper.getMainLooper());
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -92,255 +75,270 @@ public class RecordingFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        secondsElapsed = 0;
-        isStopping     = false;
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        version         = prefs.getString(SettingsFragment.PREF_VERSION, "A");
-        shouldSaveVideo = prefs.getBoolean(SettingsFragment.PREF_SAVE_VIDEO, false);
-
-        previewView         = view.findViewById(R.id.previewView);
-        tvTimer             = view.findViewById(R.id.tvTimer);
-        overlayCard         = view.findViewById(R.id.overlayCard);
-        tvWpm               = view.findViewById(R.id.tvWpm);
-        tvFillers           = view.findViewById(R.id.tvFillers);
-        tvEye               = view.findViewById(R.id.tvEye);
+        previewView        = view.findViewById(R.id.previewView);
+        tvWpm              = view.findViewById(R.id.tvWpm);
+        tvFillers          = view.findViewById(R.id.tvFillers);
+        tvEye              = view.findViewById(R.id.tvEye);
         tvPartialTranscript = view.findViewById(R.id.tvPartialTranscript);
-        btnPauseResume      = view.findViewById(R.id.btnPauseResume);
-        btnStop             = view.findViewById(R.id.btnStop);
+        overlayCard        = view.findViewById(R.id.overlayCard);
+        btnStop            = view.findViewById(R.id.btnStop);
+        btnPauseResume     = view.findViewById(R.id.btnPauseResume);
+        tvTimer            = view.findViewById(R.id.tvTimer);
 
-        tvTimer.setText("0:00");
+        // Version A = live overlay visible, Version B = hidden
+        String version = PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
+                .getString("selected_version", "A");
+        overlayCard.setVisibility("A".equals(version) ? View.VISIBLE : View.GONE);
 
-        viewModel = new ViewModelProvider(this).get(RecordingViewModel.class);
-        viewModel.startSession();
+        // FIX: Stop button disabled for first 5 seconds
+        btnStop.setEnabled(false);
+        btnStop.setAlpha(0.4f);
 
-        overlayCard.setVisibility(version.equals("A") ? View.VISIBLE : View.GONE);
+        if (checkPermissions()) {
+            startSession(version);
+        } else {
+            requestPermissions(new String[]{
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.RECORD_AUDIO
+            }, PERMISSIONS_REQUEST);
+        }
+    }
 
-        viewModel.wpm.observe(getViewLifecycleOwner(),
-                wpm -> tvWpm.setText(String.format("WPM: %d", wpm.intValue())));
-        viewModel.fillerCount.observe(getViewLifecycleOwner(),
-                count -> tvFillers.setText("Fillers: " + count));
-        viewModel.eyeContact.observe(getViewLifecycleOwner(),
-                pct -> tvEye.setText(String.format("Eye: %d%%", pct.intValue())));
-        viewModel.partialText.observe(getViewLifecycleOwner(), text -> {
-            if (text != null && !text.isEmpty()) {
-                String tail = text.length() > 60 ? "…" + text.substring(text.length() - 60) : text;
-                tvPartialTranscript.setText(tail);
+    // ─────────────────────────────────────────────────────────────────────────
+    private void startSession(String version) {
+        sessionStartMs = System.currentTimeMillis();
+        isRecording    = true;
+
+        // Enable Stop after MIN_SESSION_MS
+        mainHandler.postDelayed(() -> {
+            if (!isAdded() || !isRecording) return;
+            btnStop.setEnabled(true);
+            btnStop.setAlpha(1f);
+        }, MIN_SESSION_MS);
+
+        // ── Timer ─────────────────────────────────────────────────────────────
+        Runnable timerTick = new Runnable() {
+            @Override public void run() {
+                if (!isAdded() || !isRecording) return;
+                long elapsed = (System.currentTimeMillis() - sessionStartMs) / 1000;
+                tvTimer.setText(String.format("%d:%02d", elapsed / 60, elapsed % 60));
+                timerHandler.postDelayed(this, 1000);
             }
+        };
+        timerHandler.post(timerTick);
+
+        // ── Eye contact: EyeContactAnalyzer takes a callback, NOT a Context ──
+        eyeContactAnalyzer = new EyeContactAnalyzer(isContact -> {
+            eyeFrames.incrementAndGet();
+            if (isContact) contactFrames.incrementAndGet();
         });
 
-        boolean hasCam   = ContextCompat.checkSelfPermission(requireContext(),
-                Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
-        boolean hasAudio = ContextCompat.checkSelfPermission(requireContext(),
-                Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
-
-        if (hasCam && hasAudio) startCamera();
-        else permissionLauncher.launch(new String[]{
-                Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO });
-
-        btnPauseResume.setOnClickListener(v -> {
-            if (isPaused) resumeSession(); else pauseSession();
-        });
-        btnStop.setOnLongClickListener(v -> { stopRecording(); return true; });
-        btnStop.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Hold to stop session", Toast.LENGTH_SHORT).show());
-
-        startTimer();
-    }
-
-    private void pauseSession() {
-        isPaused = true;
-        btnPauseResume.setText("▶ Resume");
-        timerHandler.removeCallbacks(timerRunnable);
-        if (speechRecognizer != null) speechRecognizer.stopListening();
-        if (activeRecording  != null) activeRecording.pause();
-        View recDot = requireView().findViewById(R.id.recDot);
-        recDot.clearAnimation();
-        recDot.setAlpha(0.25f);
-    }
-
-    private void resumeSession() {
-        isPaused = false;
-        btnPauseResume.setText("⏸ Pause");
-        timerHandler.postDelayed(timerRunnable, 1000);
-        if (speechRecognizer != null) speechRecognizer.startListening(recognizerIntent);
-        if (activeRecording  != null) activeRecording.resume();
-        View recDot = requireView().findViewById(R.id.recDot);
-        recDot.setAlpha(1f);
-        android.view.animation.AlphaAnimation blink =
-                new android.view.animation.AlphaAnimation(1.0f, 0.0f);
-        blink.setDuration(600);
-        blink.setRepeatMode(android.view.animation.Animation.REVERSE);
-        blink.setRepeatCount(android.view.animation.Animation.INFINITE);
-        recDot.startAnimation(blink);
-    }
-
-    private void startCamera() {
+        // Camera + ImageAnalysis
         ListenableFuture<ProcessCameraProvider> future =
                 ProcessCameraProvider.getInstance(requireContext());
         future.addListener(() -> {
             try {
-                ProcessCameraProvider cameraProvider = future.get();
+                ProcessCameraProvider provider = future.get();
                 Preview preview = new Preview.Builder().build();
                 preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
-                ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+                ImageAnalysis analysis = new ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build();
-                imageAnalysis.setAnalyzer(
-                        Executors.newSingleThreadExecutor(),
-                        new EyeContactAnalyzer(isContact -> viewModel.updateEyeContact(isContact)));
+                analysis.setAnalyzer(Executors.newSingleThreadExecutor(), eyeContactAnalyzer);
 
-                cameraProvider.unbindAll();
+                provider.unbindAll();
+                provider.bindToLifecycle(getViewLifecycleOwner(),
+                        CameraSelector.DEFAULT_FRONT_CAMERA, preview, analysis);
 
-                if (shouldSaveVideo) {
-                    Recorder recorder = new Recorder.Builder()
-                            .setQualitySelector(QualitySelector.from(Quality.HD))
-                            .build();
-                    videoCapture = VideoCapture.withOutput(recorder);
-                    cameraProvider.bindToLifecycle(
-                            getViewLifecycleOwner(),
-                            CameraSelector.DEFAULT_FRONT_CAMERA,
-                            preview, imageAnalysis, videoCapture);
-                    startSpeechRecognition();
-                    startVideoRecording();
-                } else {
-                    cameraProvider.bindToLifecycle(
-                            getViewLifecycleOwner(),
-                            CameraSelector.DEFAULT_FRONT_CAMERA,
-                            preview, imageAnalysis);
-                    startSpeechRecognition();
-                }
             } catch (ExecutionException | InterruptedException e) {
-                e.printStackTrace();
+                Toast.makeText(requireContext(),
+                        "Camera error: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         }, ContextCompat.getMainExecutor(requireContext()));
-    }
 
-    private void startVideoRecording() {
-        if (videoCapture == null) return;
-        File videoFile = new File(requireContext().getExternalFilesDir(null),
-                "session_" + System.currentTimeMillis() + ".mp4");
-        videoFilePath = videoFile.getAbsolutePath();
-
-        activeRecording = videoCapture.getOutput()
-                .prepareRecording(requireContext(), new FileOutputOptions.Builder(videoFile).build())
-                .withAudioEnabled()
-                .start(ContextCompat.getMainExecutor(requireContext()), event -> {
-                    if (event instanceof VideoRecordEvent.Finalize) {
-                        VideoRecordEvent.Finalize fin = (VideoRecordEvent.Finalize) event;
-                        if (fin.hasError()) videoFilePath = "";
-                        if (isStopping) navigateToResult();
-                    }
-                });
-    }
-
-    private void startSpeechRecognition() {
-        if (!SpeechRecognizer.isRecognitionAvailable(requireContext())) {
-            Toast.makeText(requireContext(), "Speech recognition not available",
-                    Toast.LENGTH_SHORT).show();
-            return;
-        }
-        recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(requireContext());
-        speechRecognizer.setRecognitionListener(new RecognitionListener() {
-            @Override public void onPartialResults(Bundle partialResults) {
-                java.util.ArrayList<String> results =
-                        partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                if (results != null && !results.isEmpty())
-                    viewModel.onPartialTranscript(results.get(0));
-            }
-            @Override public void onResults(Bundle results) {
-                viewModel.resetPartial();
-                if (speechRecognizer != null && !isPaused)
-                    speechRecognizer.startListening(recognizerIntent);
-            }
-            @Override public void onError(int error) {
-                timerHandler.postDelayed(() -> {
-                    if (speechRecognizer != null && !isPaused)
-                        speechRecognizer.startListening(recognizerIntent);
-                }, 300);
-            }
-            @Override public void onReadyForSpeech(Bundle p) {}
-            @Override public void onBeginningOfSpeech()      {}
-            @Override public void onRmsChanged(float v)      {}
-            @Override public void onBufferReceived(byte[] b) {}
-            @Override public void onEndOfSpeech()            {}
-            @Override public void onEvent(int t, Bundle b)   {}
-        });
-        speechRecognizer.startListening(recognizerIntent);
-    }
-
-    private void startTimer() {
-        timerRunnable = new Runnable() {
+        // Eye % update tick
+        mainHandler.post(new Runnable() {
             @Override public void run() {
-                secondsElapsed++;
-                tvTimer.setText(String.format("%d:%02d",
-                        secondsElapsed / 60, secondsElapsed % 60));
-                timerHandler.postDelayed(this, 1000);
+                if (!isAdded() || !isRecording) return;
+                int total = eyeFrames.get();
+                int pct   = total > 0
+                        ? (int)(contactFrames.get() * 100f / total) : 0;
+                tvEye.setText("Eye: " + pct + "%");
+                mainHandler.postDelayed(this, 500);
             }
-        };
-        timerHandler.postDelayed(timerRunnable, 1000);
-
-        View recDot = requireView().findViewById(R.id.recDot);
-        android.view.animation.AlphaAnimation blink =
-                new android.view.animation.AlphaAnimation(1.0f, 0.0f);
-        blink.setDuration(600);
-        blink.setRepeatMode(android.view.animation.Animation.REVERSE);
-        blink.setRepeatCount(android.view.animation.Animation.INFINITE);
-        recDot.startAnimation(blink);
-    }
-
-    private void stopRecording() {
-        if (isStopping) return;
-        isStopping = true;
-
-        timerHandler.removeCallbacks(timerRunnable);
-        // FIX 6: Removed tvTimer.setText("0:00") — it was resetting the display
-        // to 0:00 while waiting for the Finalize event, causing a jarring flash.
-        // The timer now keeps showing the final elapsed time until navigation fires.
-
-        if (speechRecognizer != null) {
-            speechRecognizer.stopListening();
-            speechRecognizer.destroy();
-            speechRecognizer = null;
-        }
-
-        if (shouldSaveVideo && activeRecording != null) {
-            activeRecording.stop();
-            activeRecording = null;
-        } else {
-            activeRecording = null;
-            navigateToResult();
-        }
-    }
-
-    private void navigateToResult() {
-        final int    duration = secondsElapsed;
-        final String video    = videoFilePath;
-        Executors.newSingleThreadExecutor().execute(() -> {
-            long sessionId = viewModel.saveSession(duration, version, video);
-            if (!isAdded()) return;
-            requireActivity().runOnUiThread(() -> {
-                if (!isAdded()) return;
-                Bundle bundle = new Bundle();
-                bundle.putLong("sessionId", sessionId);
-                Navigation.findNavController(requireView())
-                        .navigate(R.id.action_recording_to_result, bundle);
-            });
         });
+
+        // ── Speech: SpeechAnalyzer takes no constructor args ──────────────────
+        speechAnalyzer = new SpeechAnalyzer();
+        speechAnalyzer.start();
+
+        // We drive SpeechRecognizer manually here so we can wire it to SpeechAnalyzer
+        startSpeechRecognizer();
+
+        // ── Pause / Resume ────────────────────────────────────────────────────
+        btnPauseResume.setOnClickListener(v -> {
+            if (!isPaused) {
+                stopSpeechRecognizer();
+                btnPauseResume.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.ic_play));
+                btnPauseResume.setText("Resume");
+            } else {
+                startSpeechRecognizer();
+                btnPauseResume.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.ic_pause));
+                btnPauseResume.setText("Pause");
+            }
+            isPaused = !isPaused;
+        });
+
+        btnStop.setOnClickListener(v -> finishSession());
+    }
+
+    // ── SpeechRecognizer wiring ───────────────────────────────────────────────
+    private android.speech.SpeechRecognizer recognizer;
+    private android.speech.RecognizerIntent recognizerIntent;
+
+    private void startSpeechRecognizer() {
+        if (!isAdded()) return;
+        recognizer = android.speech.SpeechRecognizer.createSpeechRecognizer(requireContext());
+
+        android.content.Intent intent = new android.content.Intent(
+                android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(android.speech.RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+        intent.putExtra(android.speech.RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+
+        recognizer.setRecognitionListener(new android.speech.RecognitionListener() {
+            @Override public void onReadyForSpeech(Bundle b) {}
+            @Override public void onBeginningOfSpeech() {}
+            @Override public void onRmsChanged(float v) {}
+            @Override public void onBufferReceived(byte[] b) {}
+            @Override public void onEndOfSpeech() {}
+            @Override public void onEvent(int t, Bundle b) {}
+
+            @Override public void onPartialResults(Bundle b) {
+                java.util.ArrayList<String> r =
+                        b.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION);
+                if (r != null && !r.isEmpty()) {
+                    String partial = r.get(0);
+                    speechAnalyzer.processText(partial);
+                    if (isAdded()) {
+                        requireActivity().runOnUiThread(() -> {
+                            tvPartialTranscript.setText(partial);
+                            tvWpm.setText("WPM: " + (int) speechAnalyzer.getCurrentWpm());
+                            tvFillers.setText("Fillers: " + speechAnalyzer.getFillerWordCount());
+                        });
+                    }
+                }
+            }
+
+            @Override public void onResults(Bundle b) {
+                java.util.ArrayList<String> r =
+                        b.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION);
+                if (r != null && !r.isEmpty()) {
+                    speechAnalyzer.processText(r.get(0));
+                    speechAnalyzer.resetPartial();
+                }
+                // Auto-restart for continuous listening
+                if (isRecording && !isPaused && isAdded()) {
+                    mainHandler.postDelayed(() -> {
+                        if (isRecording && !isPaused && isAdded()) recognizer.startListening(intent);
+                    }, 100);
+                }
+            }
+
+            @Override public void onError(int error) {
+                // Restart on most errors
+                if (isRecording && !isPaused && isAdded()) {
+                    mainHandler.postDelayed(() -> {
+                        if (isRecording && !isPaused && isAdded()) recognizer.startListening(intent);
+                    }, 300);
+                }
+            }
+        });
+        recognizer.startListening(intent);
+    }
+
+    private void stopSpeechRecognizer() {
+        if (recognizer != null) {
+            recognizer.stopListening();
+            recognizer.destroy();
+            recognizer = null;
+        }
+    }
+
+    // ── Finish session ────────────────────────────────────────────────────────
+    private void finishSession() {
+        if (!isRecording) return;
+        isRecording = false;
+        stopEverything();
+
+        int    durationSec = (int) ((System.currentTimeMillis() - sessionStartMs) / 1000);
+        int    fillers     = speechAnalyzer.getFillerWordCount();
+        float  avgWpm      = speechAnalyzer.getCurrentWpm();
+        int    total       = eyeFrames.get();
+        float  eyePct      = total > 0 ? (contactFrames.get() * 100f / total) : 0f;
+        String transcript  = speechAnalyzer.getTranscript();
+        String version     = PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
+                .getString("selected_version", "A");
+
+        SpeechSession session = new SpeechSession(
+                System.currentTimeMillis(), durationSec, fillers,
+                avgWpm, eyePct, transcript, version, "");
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            long id = AppDatabase.getInstance(requireContext())
+                    .sessionDao().insert(session);
+            if (!isAdded()) return;
+            Bundle args = new Bundle();
+            args.putLong("sessionId", id);
+            requireActivity().runOnUiThread(() ->
+                    Navigation.findNavController(requireView())
+                            .navigate(R.id.action_recording_to_result, args));
+        });
+    }
+
+    private void stopEverything() {
+        timerHandler.removeCallbacksAndMessages(null);
+        mainHandler.removeCallbacksAndMessages(null);
+        stopSpeechRecognizer();
+        eyeFrames.set(0);
+        contactFrames.set(0);
+    }
+
+    private boolean checkPermissions() {
+        return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
+                    == PackageManager.PERMISSION_GRANTED
+            && ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
+                    == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode == PERMISSIONS_REQUEST
+                && grantResults.length >= 2
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+            String version = PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
+                    .getString("selected_version", "A");
+            startSession(version);
+        } else {
+            Toast.makeText(requireContext(),
+                    "Camera and microphone permissions required.",
+                    Toast.LENGTH_LONG).show();
+            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+        }
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        timerHandler.removeCallbacks(timerRunnable);
-        if (speechRecognizer != null) { speechRecognizer.destroy(); speechRecognizer = null; }
-        if (activeRecording  != null) { activeRecording.stop();     activeRecording  = null; }
+        isRecording = false;
+        stopEverything();
     }
 }

@@ -2,28 +2,12 @@ package com.example.mirrortalk26.util;
 
 /**
  * Single source of truth for the confidence-score formula.
- *
- * Previously the formula was copy-pasted (slightly differently) in three places:
- *   ResultFragment, CompareFragment, and SessionAdapter.
- * CompareFragment and SessionAdapter used a simplified check
- *   "else if (wpm >= 100) wpmScore = 75f"
- * which never penalised WPM > 180, producing scores different from ResultFragment.
- *
- * All three screens now call ScoreUtils.computeScore() and are guaranteed to agree.
+ * Used by ResultFragment, CompareFragment, SessionAdapter, and HistoryFragment chart.
  *
  * Scoring weights:
- *   Eye contact  : 40 %   (most impactful for perceived confidence)
- *   WPM          : 35 %
- *   Filler words : 25 %
- *
- * WPM scoring bands:
- *   120–160 wpm  → 100  (ideal conversational pace)
- *   100–119 wpm  → 75   (slightly slow but clear)
- *   161–180 wpm  → 75   (slightly fast but still understandable)
- *   > 0 wpm      → 40   (too slow or too fast)
- *   0 wpm        → 0    (no speech detected)
- *
- * Filler score: 100 − (fillerCount × 10), floored at 0.
+ *   Eye contact  : 40%
+ *   WPM          : 35%
+ *   Filler words : 25%
  */
 public final class ScoreUtils {
 
@@ -42,15 +26,23 @@ public final class ScoreUtils {
         float fillerScore = Math.max(0f, 100f - (fillerCount * 10f));
 
         return (int) ((eyeContactPercent * 0.40f)
-                + (wpmScore          * 0.35f)
-                + (fillerScore       * 0.25f));
+                + (wpmScore            * 0.35f)
+                + (fillerScore         * 0.25f));
     }
 
-    /** Human-readable label for a given score. */
+    /** Human-readable label (no emoji — use vector icons in the UI). */
     public static String scoreLabel(int score) {
-        if (score >= 80) return "Excellent 🏆";
-        if (score >= 60) return "Good 💪";
-        if (score >= 40) return "Getting there 📈";
-        return "Keep going 🎯";
+        if (score >= 80) return "Excellent";
+        if (score >= 60) return "Good";
+        if (score >= 40) return "Getting there";
+        return "Keep going";
+    }
+
+    /** Returns the colour int for a given score (for programmatic tinting). */
+    public static int scoreColor(int score) {
+        if (score >= 80) return 0xFF1D9E75;
+        if (score >= 60) return 0xFF7F77DD;
+        if (score >= 40) return 0xFFFFCC44;
+        return 0xFFFF6B6B;
     }
 }

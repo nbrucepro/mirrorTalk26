@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="#0D0D1A">
+
+    <TextView
+        android:id="@+id/tvCountdownPrompt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Get ready…"
+        android:textColor="#7F77DD"
+        android:textSize="18sp"
+        android:layout_marginBottom="32dp"/>
+
+    <TextView
+        android:id="@+id/tvCountdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="3"
+        android:textColor="#FFFFFF"
+        android:textSize="120sp"
+        android:textStyle="bold"
+        android:includeFontPadding="false"/>
+
+    <View
+        android:layout_width="48dp"
+        android:layout_height="3dp"
+        android:background="#3C3489"
+        android:layout_marginTop="32dp"/>
+
+</LinearLayout>

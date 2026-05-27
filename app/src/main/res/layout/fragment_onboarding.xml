@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0D0D1A"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
+        android:paddingTop="60dp"
+        android:paddingBottom="40dp">
+
+        <!-- Logo -->
+        <FrameLayout android:layout_width="80dp" android:layout_height="80dp"
+            android:layout_marginBottom="24dp">
+            <View android:layout_width="80dp" android:layout_height="80dp"
+                android:background="@drawable/circle_bg"/>
+            <ImageView android:layout_width="36dp" android:layout_height="36dp"
+                android:layout_gravity="center" android:src="@drawable/ic_mic"
+                app:tint="#7F77DD"/>
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Welcome to MirrorTalk"
+            android:textColor="#FFFFFF"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your AI-powered speaking confidence trainer"
+            android:textColor="#7F77DD"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:layout_marginBottom="40dp"/>
+
+        <!-- Name field -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilName"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Your first name"
+            android:layout_marginBottom="24dp"
+            app:boxStrokeColor="#3C3489"
+            app:hintTextColor="#7F77DD">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName|textCapWords"
+                android:textColor="#FFFFFF"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Speaking goal -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="What is your primary speaking goal?"
+            android:textColor="#AAAACC"
+            android:textSize="14sp"
+            android:layout_marginBottom="12dp"/>
+
+        <RadioGroup
+            android:id="@+id/rgGoal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="36dp">
+
+            <RadioButton android:id="@+id/rbGoal1"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Reduce filler words"
+                android:textColor="#CCCCEE" android:textSize="15sp"
+                android:buttonTint="#7F77DD" android:checked="true"
+                android:paddingStart="8dp" android:layout_marginBottom="8dp"/>
+
+            <RadioButton android:id="@+id/rbGoal2"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Improve eye contact"
+                android:textColor="#CCCCEE" android:textSize="15sp"
+                android:buttonTint="#7F77DD"
+                android:paddingStart="8dp" android:layout_marginBottom="8dp"/>
+
+            <RadioButton android:id="@+id/rbGoal3"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Control speaking pace"
+                android:textColor="#CCCCEE" android:textSize="15sp"
+                android:buttonTint="#7F77DD"
+                android:paddingStart="8dp" android:layout_marginBottom="8dp"/>
+
+            <RadioButton android:id="@+id/rbGoal4"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="General improvement"
+                android:textColor="#CCCCEE" android:textSize="15sp"
+                android:buttonTint="#7F77DD"
+                android:paddingStart="8dp"/>
+
+        </RadioGroup>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGetStarted"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:text="Get Started"
+            android:textSize="17sp"
+            android:textColor="#FFFFFF"
+            app:backgroundTint="#7F77DD"
+            app:cornerRadius="30dp"/>
+
+    </LinearLayout>
+</ScrollView>

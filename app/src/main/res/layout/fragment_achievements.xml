@@ -50,10 +50,10 @@
             android:padding="20dp">
 
             <!-- XP + Level card -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="16dp"
                 app:cardBackgroundColor="#1A1435"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp">
@@ -82,6 +82,15 @@
                             android:textSize="28sp"
                             android:textStyle="bold"/>
 
+                        <!-- Fire icon + streak (no emoji) -->
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_badge_fire"
+                            android:layout_marginEnd="4dp"
+                            app:tint="#FFCC44"
+                            android:contentDescription="Streak fire"/>
+
                         <TextView
                             android:id="@+id/tvStreak"
                             android:layout_width="wrap_content"
@@ -101,16 +110,16 @@
                         android:textSize="13sp"
                         android:layout_marginBottom="10dp"/>
 
-                    <!-- XP progress bar -->
-                    <ProgressBar
+                    <!-- M3 LinearProgressIndicator replaces old ProgressBar -->
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/xpBar"
-                        style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="match_parent"
-                        android:layout_height="10dp"
-                        android:progressTint="#7F77DD"
-                        android:progressBackgroundTint="#2A2A40"
+                        android:layout_height="wrap_content"
                         android:max="100"
-                        android:progress="0"/>
+                        android:progress="0"
+                        app:indicatorColor="#7F77DD"
+                        app:trackColor="#2A2A40"
+                        app:trackCornerRadius="4dp"/>
 
                     <TextView
                         android:id="@+id/tvXpProgress"
@@ -121,9 +130,84 @@
                         android:layout_marginTop="6dp"/>
 
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
-            <!-- Badges section label -->
+            <!-- Personal bests card -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PERSONAL BESTS"
+                android:textColor="#7F77DD"
+                android:textSize="11sp"
+                android:letterSpacing="0.12"
+                android:layout_marginBottom="10dp"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:cardBackgroundColor="#1A1A2E"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                        <TextView android:id="@+id/tvPbWpm"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="--" android:textColor="#7F77DD"
+                            android:textSize="22sp" android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Best WPM" android:textColor="#444466" android:textSize="11sp"/>
+                    </LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                        <TextView android:id="@+id/tvPbEye"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="--" android:textColor="#1D9E75"
+                            android:textSize="22sp" android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Best Eye%" android:textColor="#444466" android:textSize="11sp"/>
+                    </LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                        <TextView android:id="@+id/tvPbFiller"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="--" android:textColor="#FFCC44"
+                            android:textSize="22sp" android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Fewest Fillers" android:textColor="#444466" android:textSize="11sp"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Streak heatmap label -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PRACTICE CALENDAR (10 weeks)"
+                android:textColor="#7F77DD"
+                android:textSize="11sp"
+                android:letterSpacing="0.12"
+                android:layout_marginBottom="10dp"/>
+
+            <!-- Heatmap — cells injected programmatically -->
+            <GridLayout
+                android:id="@+id/heatmapGrid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="7"
+                android:layout_marginBottom="20dp"/>
+
+            <!-- Badges label -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

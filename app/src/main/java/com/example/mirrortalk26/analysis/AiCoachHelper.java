@@ -1,5 +1,7 @@
 package com.example.mirrortalk26.analysis;
 
+import android.util.Log;
+
 import com.example.mirrortalk26.ApiKeyConfig;
 
 import org.json.JSONArray;
@@ -11,65 +13,86 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-/**
- * Calls the Anthropic Messages API on a background thread and returns
- * 3 personalised coaching tips based on the session's metrics.
- *
- * IMPORTANT: Callbacks (onResult / onError) are delivered on a background
- * thread — always wrap UI updates in Activity.runOnUiThread() at the call site.
- */
 public class AiCoachHelper {
 
+    private static final String TAG = "GEMINI_API";
+
     public interface CoachCallback {
-        void onResult(String tips);   // newline-separated tips
+        void onResult(String tips);
         void onError(String message);
     }
 
-    private static final Executor executor = Executors.newSingleThreadExecutor();
+    private static final ExecutorService pool =
+            Executors.newCachedThreadPool();
 
-    /**
-     * @param wpm           average words per minute for the session
-     * @param fillerCount   total filler words detected
-     * @param eyeContactPct eye-contact percentage (0–100)
-     * @param transcript    full session transcript (may be empty)
-     * @param callback      delivered on a background thread; wrap in runOnUiThread
-     */
-    public static void fetchTips(int wpm, int fillerCount, float eyeContactPct,
-                                 String transcript, CoachCallback callback) {
-        executor.execute(() -> {
+    private Future<?> currentTask;
+
+    public void fetchTips(
+            int wpm,
+            int fillerCount,
+            float eyeContactPct,
+            String transcript,
+            CoachCallback callback
+    ) {
+
+        // Cancel previous request if it's still running
+        if (currentTask != null && !currentTask.isDone()) {
+            currentTask.cancel(true);
+        }
+
+        currentTask = pool.submit(() -> {
             try {
-                String prompt = buildPrompt(wpm, fillerCount, eyeContactPct, transcript);
+                String prompt = buildPrompt(
+                        wpm,
+                        fillerCount,
+                        eyeContactPct,
+                        transcript
+                );
 
-                URL url = new URL("https://api.anthropic.com/v1/messages");
+                // REFACTORED: Updated model version to gemini-2.5-flash to resolve HTTP 404
+                URL url = new URL(
+                        "https://generativelanguage.googleapis.com/v1beta/models/" +
+                                "gemini-2.5-flash:generateContent?key=" +
+                                ApiKeyConfig.GEMINI_API_KEY
+                );
+
+                Log.d(TAG, "Request URL: " + url);
+
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
-                conn.setRequestProperty("x-api-key", ApiKeyConfig.ANTHROPIC_API_KEY);
-                conn.setRequestProperty("anthropic-version", "2023-06-01");
-                conn.setConnectTimeout(15_000);
-                conn.setReadTimeout(30_000);
+                conn.setConnectTimeout(15000);
+                conn.setReadTimeout(30000);
                 conn.setDoOutput(true);
 
+                // Build Request Body
                 JSONObject body = new JSONObject();
-                body.put("model", "claude-sonnet-4-20250514");
-                body.put("max_tokens", 400);
+                JSONArray contents = new JSONArray();
+                JSONObject content = new JSONObject();
+                content.put("role", "user");
 
-                JSONArray messages = new JSONArray();
-                JSONObject userMsg = new JSONObject();
-                userMsg.put("role", "user");
-                userMsg.put("content", prompt);
-                messages.put(userMsg);
-                body.put("messages", messages);
+                JSONArray parts = new JSONArray();
+                JSONObject textPart = new JSONObject();
+                textPart.put(
+                        "text",
+                        "You are a professional public speaking coach.\n\n" +
+                                "Reply with EXACTLY 3 short actionable coaching tips.\n" +
+                                "Each tip must start with an emoji.\n" +
+                                "No numbering.\n" +
+                                "No headers.\n\n" +
+                                prompt
+                );
 
-                body.put("system",
-                        "You are a professional public speaking coach. " +
-                                "The user just finished a practice session. " +
-                                "Reply with EXACTLY 3 short, specific, actionable tips — one per line. " +
-                                "Start each line with a relevant emoji. " +
-                                "Be encouraging but honest. Do NOT add headers, numbering, or extra text.");
+                parts.put(textPart);
+                content.put("parts", parts);
+                contents.put(content);
+                body.put("contents", contents);
+
+                Log.d(TAG, "Request Body: " + body.toString());
 
                 byte[] input = body.toString().getBytes(StandardCharsets.UTF_8);
                 try (OutputStream os = conn.getOutputStream()) {
@@ -77,45 +100,83 @@ public class AiCoachHelper {
                 }
 
                 int status = conn.getResponseCode();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(
-                        status >= 400 ? conn.getErrorStream() : conn.getInputStream(),
-                        StandardCharsets.UTF_8));
+                Log.d(TAG, "HTTP Status: " + status);
+
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(
+                                status >= 400 ? conn.getErrorStream() : conn.getInputStream(),
+                                StandardCharsets.UTF_8
+                        )
+                );
+
                 StringBuilder sb = new StringBuilder();
                 String line;
-                while ((line = reader.readLine()) != null) sb.append(line);
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                }
                 reader.close();
 
+                Log.d(TAG, "Raw Response: " + sb.toString());
+
                 if (status != 200) {
-                    callback.onError("API error " + status);
+                    Log.e(TAG, "Gemini API Error");
+                    callback.onError(
+                            "Gemini API error\n\n" +
+                                    "Status: " + status +
+                                    "\n\nResponse:\n" +
+                                    sb
+                    );
                     return;
                 }
 
+                // Parse response
                 JSONObject response = new JSONObject(sb.toString());
-                JSONArray  content  = response.getJSONArray("content");
-                String     tips     = content.getJSONObject(0).getString("text").trim();
+                String tips = response
+                        .getJSONArray("candidates")
+                        .getJSONObject(0)
+                        .getJSONObject("content")
+                        .getJSONArray("parts")
+                        .getJSONObject(0)
+                        .getString("text")
+                        .trim();
+
+                Log.d(TAG, "Parsed Tips: " + tips);
                 callback.onResult(tips);
 
             } catch (Exception e) {
-                callback.onError("Could not reach coaching server: " + e.getMessage());
+                Log.e(TAG, "Exception happened", e);
+                if (!Thread.currentThread().isInterrupted()) {
+                    callback.onError("Exception:\n\n" + e.toString());
+                }
             }
         });
     }
 
-    private static String buildPrompt(int wpm, int fillerCount,
-                                      float eyeContact, String transcript) {
+    public void cancel() {
+        if (currentTask != null) {
+            currentTask.cancel(true);
+        }
+    }
+
+    private String buildPrompt(
+            int wpm,
+            int fillerCount,
+            float eyeContact,
+            String transcript
+    ) {
         StringBuilder sb = new StringBuilder();
-        // FIX 2: Was "\\n" (literal backslash-n) — must be "\n" (real newline)
-        // so the API receives a properly formatted prompt, not garbled text.
         sb.append("My speaking session metrics:\n");
         sb.append("- Words per minute: ").append(wpm).append("\n");
         sb.append("- Filler words used: ").append(fillerCount).append("\n");
         sb.append("- Eye contact: ").append((int) eyeContact).append("%\n");
+
         if (transcript != null && transcript.length() > 20) {
             String excerpt = transcript.length() > 400
-                    ? transcript.substring(0, 400) + "…"
+                    ? transcript.substring(0, 400) + "..."
                     : transcript;
             sb.append("- Transcript excerpt: \"").append(excerpt).append("\"\n");
         }
+
         sb.append("\nGive me 3 personalised coaching tips for my next session.");
         return sb.toString();
     }
